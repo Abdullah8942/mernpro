@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# Environment
+.env
+
+# Backend uploads
+backend/uploads/
+
+# Frontend build
+frontend/build/
+
+# Ignore frontend git backup
+frontend/.git_backup/
+
+.DS_Store
+
