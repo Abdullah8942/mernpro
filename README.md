@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Meraab & Emaan - E-Commerce Web Application
 
 A complete MERN stack e-commerce web application for "Meraab & Emaan" - an elegant Pakistani clothing brand specializing in Shalwar Kameez, Bridal, Formal, Casual, Party Wear, and Seasonal Collections.
@@ -208,3 +209,6 @@ For any inquiries, please contact us at support@meraab-emaan.com
 ---
 
 Made with ❤️ for Meraab & Emaan
+=======
+# mernpro
+>>>>>>> 6ccabc367f4dd0f01c601e18d557dca5e6982cc3
