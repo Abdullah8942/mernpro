@@ -1,0 +1,171 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker } from 'react-icons/hi';
+import { FaFacebookF, FaInstagram, FaPinterestP, FaTwitter } from 'react-icons/fa';
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="bg-secondary-900 text-white">
+      {/* Newsletter Section */}
+      <div className="bg-primary-700">
+        <div className="container-custom py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-2xl font-display font-semibold">Subscribe to Our Newsletter</h3>
+              <p className="text-primary-100 mt-1">Get updates on new arrivals and exclusive offers</p>
+            </div>
+            <form className="flex w-full md:w-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="px-4 py-3 w-full md:w-80 rounded-l-md text-gray-800 focus:outline-none"
+              />
+              <button type="submit" className="bg-gold-500 hover:bg-gold-600 px-6 py-3 rounded-r-md font-medium transition-colors">
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer */}
+      <div className="container-custom py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          {/* Brand Info */}
+          <div>
+            <h2 className="text-2xl font-display font-bold mb-4">
+              Meraab <span className="text-gold-400">&</span> Emaan
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Elevating Pakistani fashion with exquisite craftsmanship and timeless elegance. 
+              From bridal wear to casual chic, we bring your fashion dreams to life.
+            </p>
+            <div className="flex space-x-4">
+              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <FaFacebookF className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <FaInstagram className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <FaPinterestP className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <FaTwitter className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/shop" className="text-gray-400 hover:text-white transition-colors">Shop All</Link>
+              </li>
+              <li>
+                <Link to="/shop?category=new-arrivals" className="text-gray-400 hover:text-white transition-colors">New Arrivals</Link>
+              </li>
+              <li>
+                <Link to="/shop?category=bridal" className="text-gray-400 hover:text-white transition-colors">Bridal Collection</Link>
+              </li>
+              <li>
+                <Link to="/shop?featured=true" className="text-gray-400 hover:text-white transition-colors">Featured Products</Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Customer Service */}
+          <div>
+            <h3 className="text-lg font-semibold mb-6">Customer Service</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/orders" className="text-gray-400 hover:text-white transition-colors">My Orders</Link>
+              </li>
+              <li>
+                <Link to="/track-order" className="text-gray-400 hover:text-white transition-colors">Track Order</Link>
+              </li>
+              <li>
+                <Link to="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Policy</Link>
+              </li>
+              <li>
+                <Link to="/returns" className="text-gray-400 hover:text-white transition-colors">Returns & Exchanges</Link>
+              </li>
+              <li>
+                <Link to="/faq" className="text-gray-400 hover:text-white transition-colors">FAQs</Link>
+              </li>
+              <li>
+                <Link to="/size-guide" className="text-gray-400 hover:text-white transition-colors">Size Guide</Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-lg font-semibold mb-6">Contact Us</h3>
+            <ul className="space-y-4">
+              <li className="flex items-start space-x-3">
+                <HiOutlineLocationMarker className="w-6 h-6 text-primary-400 flex-shrink-0" />
+                <span className="text-gray-400">
+                  123 Fashion Street, Gulberg III, Lahore, Pakistan
+                </span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <HiOutlinePhone className="w-6 h-6 text-primary-400" />
+                <a href="tel:+923001234567" className="text-gray-400 hover:text-white transition-colors">
+                  +92 300 123 4567
+                </a>
+              </li>
+              <li className="flex items-center space-x-3">
+                <HiOutlineMail className="w-6 h-6 text-primary-400" />
+                <a href="mailto:info@meraabemaan.com" className="text-gray-400 hover:text-white transition-colors">
+                  info@meraabemaan.com
+                </a>
+              </li>
+            </ul>
+            <div className="mt-6">
+              <h4 className="font-medium mb-2">Store Hours</h4>
+              <p className="text-gray-400 text-sm">Mon - Sat: 10:00 AM - 9:00 PM</p>
+              <p className="text-gray-400 text-sm">Sunday: 12:00 PM - 6:00 PM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="border-t border-secondary-700">
+        <div className="container-custom py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-400 text-sm">
+              © {currentYear} Meraab & Emaan. All rights reserved.
+            </p>
+            <div className="flex items-center space-x-6">
+              <Link to="/privacy" className="text-gray-400 text-sm hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-gray-400 text-sm hover:text-white transition-colors">
+                Terms & Conditions
+              </Link>
+            </div>
+            <div className="flex items-center space-x-3">
+              <img src="/images/payment/visa.svg" alt="Visa" className="h-6" />
+              <img src="/images/payment/mastercard.svg" alt="Mastercard" className="h-6" />
+              <img src="/images/payment/jazzcash.svg" alt="JazzCash" className="h-6" />
+              <img src="/images/payment/easypaisa.svg" alt="EasyPaisa" className="h-6" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
