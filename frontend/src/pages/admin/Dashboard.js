@@ -6,7 +6,7 @@ import {
   HiOutlineArrowRight, HiOutlinePlus, HiOutlineRefresh, HiOutlineEye,
   HiOutlineCalendar, HiOutlineSparkles
 } from 'react-icons/hi';
-import { orderAPI, productAPI, userAPI } from '../../services/api';
+import { orderAPI, productAPI, userAPI, getImageUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
 
 const Dashboard = () => {
@@ -308,7 +308,7 @@ const Dashboard = () => {
                       </span>
                       <div className="w-16 h-20 bg-white rounded-xl overflow-hidden shadow-sm">
                         <img
-                          src={product.images?.[0]?.url || '/images/placeholder.jpg'}
+                          src={getImageUrl(product.images?.[0]?.url)}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />

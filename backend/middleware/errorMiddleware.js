@@ -41,6 +41,29 @@ const errorHandler = (err, req, res, next) => {
     message = 'Token expired';
   }
 
+  // Multer errors (file upload)
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    switch (err.code) {
+      case 'LIMIT_FILE_SIZE':
+        message = 'File too large. Maximum size is 5MB';
+        break;
+      case 'LIMIT_FILE_COUNT':
+        message = 'Too many files. Maximum is 10 files';
+        break;
+      case 'LIMIT_UNEXPECTED_FILE':
+        message = 'Unexpected file field';
+        break;
+      default:
+        message = `File upload error: ${err.message}`;
+    }
+  }
+
+  // Multer file filter error
+  if (err.message && err.message.includes('Invalid file type')) {
+    statusCode = 400;
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

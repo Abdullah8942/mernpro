@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HiOutlineHeart, HiHeart, HiOutlineShoppingBag, HiOutlineStar, HiStar, HiOutlineTruck, HiOutlineRefresh, HiOutlineShieldCheck, HiMinus, HiPlus } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
@@ -6,12 +6,12 @@ import { useCart } from '../context/CartContext';
 import ProductCard from '../components/products/ProductCard';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
-import { productAPI, reviewAPI, authAPI } from '../services/api';
+import { productAPI, reviewAPI, authAPI, getImageUrl } from '../services/api';
 import toast from 'react-hot-toast';
 
 const ProductDetails = () => {
   const { slug } = useParams();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { addToCart, loading: cartLoading } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -36,17 +36,7 @@ const ProductDetails = () => {
     notes: '',
   });
 
-  useEffect(() => {
-    fetchProduct();
-  }, [slug]);
-
-  useEffect(() => {
-    if (product && isAuthenticated) {
-      checkWishlist();
-    }
-  }, [product, isAuthenticated]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -76,17 +66,27 @@ const ProductDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
-  const checkWishlist = async () => {
+  const checkWishlist = useCallback(async () => {
     try {
       const response = await authAPI.getWishlist();
-      const wishlist = response.data.data;
-      setIsInWishlist(wishlist.some(item => item._id === product._id));
+      const wishlistData = response.data.data;
+      setIsInWishlist(wishlistData.some(item => item._id === product?._id));
     } catch (err) {
       console.error('Failed to check wishlist:', err);
     }
-  };
+  }, [product?._id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
+
+  useEffect(() => {
+    if (product && isAuthenticated) {
+      checkWishlist();
+    }
+  }, [product, isAuthenticated, checkWishlist]);
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
@@ -157,8 +157,8 @@ const ProductDetails = () => {
   }
 
   const images = selectedColor?.images?.length > 0 
-    ? selectedColor.images 
-    : product.images?.map(img => img.url) || [];
+    ? selectedColor.images.map(url => getImageUrl(url))
+    : product.images?.map(img => getImageUrl(img.url)) || [];
 
   return (
     <div className="min-h-screen bg-white">

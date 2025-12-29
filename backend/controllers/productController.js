@@ -180,50 +180,32 @@ const getProductById = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
   try {
-    // DEBUG: Log incoming request
-    console.log('=== CREATE PRODUCT DEBUG ===');
-    console.log('req.body:', JSON.stringify(req.body, null, 2));
-    console.log('req.files:', req.files ? req.files.length + ' files' : 'No files');
+    console.log('=== CREATE PRODUCT ===');
+    console.log('Body keys:', Object.keys(req.body));
+    console.log('Files:', req.files ? req.files.length : 0);
     
-    // Parse JSON fields from FormData
+    // Parse JSON fields from FormData (multer parses form fields as strings)
     let sizeVariations = [];
     let colors = [];
     let discount = { type: 'percentage', value: 0 };
 
-    if (req.body.sizeVariations) {
+    // Safely parse JSON fields
+    const safeJsonParse = (value, defaultValue) => {
+      if (!value) return defaultValue;
+      if (typeof value !== 'string') return value;
       try {
-        sizeVariations = typeof req.body.sizeVariations === 'string' 
-          ? JSON.parse(req.body.sizeVariations) 
-          : req.body.sizeVariations;
+        return JSON.parse(value);
       } catch (e) {
-        console.log('Failed to parse sizeVariations:', e.message);
-        sizeVariations = [];
+        console.log('JSON parse error:', e.message);
+        return defaultValue;
       }
-    }
+    };
 
-    if (req.body.colors) {
-      try {
-        colors = typeof req.body.colors === 'string' 
-          ? JSON.parse(req.body.colors) 
-          : req.body.colors;
-      } catch (e) {
-        console.log('Failed to parse colors:', e.message);
-        colors = [];
-      }
-    }
+    sizeVariations = safeJsonParse(req.body.sizeVariations, []);
+    colors = safeJsonParse(req.body.colors, []);
+    discount = safeJsonParse(req.body.discount, { type: 'percentage', value: 0 });
 
-    if (req.body.discount) {
-      try {
-        discount = typeof req.body.discount === 'string' 
-          ? JSON.parse(req.body.discount) 
-          : req.body.discount;
-      } catch (e) {
-        console.log('Failed to parse discount:', e.message);
-        discount = { type: 'percentage', value: 0 };
-      }
-    }
-
-    // Handle uploaded images
+    // Handle uploaded images from multer
     let images = [];
     if (req.files && req.files.length > 0) {
       images = req.files.map((file, index) => ({
@@ -231,25 +213,22 @@ const createProduct = async (req, res) => {
         alt: req.body.name || 'Product image',
         isPrimary: index === 0
       }));
+      console.log('Uploaded images:', images.length);
     }
 
-    // If no new images but existing image URLs provided
+    // Handle existing image URLs (for edit mode or external URLs)
     if (images.length === 0 && req.body.existingImages) {
-      try {
-        const existingImages = typeof req.body.existingImages === 'string'
-          ? JSON.parse(req.body.existingImages)
-          : req.body.existingImages;
+      const existingImages = safeJsonParse(req.body.existingImages, []);
+      if (Array.isArray(existingImages) && existingImages.length > 0) {
         images = existingImages.map((url, index) => ({
-          url,
+          url: typeof url === 'string' ? url : url.url,
           alt: req.body.name || 'Product image',
           isPrimary: index === 0
         }));
-      } catch (e) {
-        images = [];
       }
     }
 
-    // Provide a default placeholder if no images
+    // Default placeholder image if none provided
     if (images.length === 0) {
       images = [{
         url: 'https://via.placeholder.com/400x500?text=No+Image',
@@ -260,48 +239,48 @@ const createProduct = async (req, res) => {
 
     // Calculate total stock from size variations
     let totalStock = 0;
-    if (sizeVariations && sizeVariations.length > 0) {
+    if (Array.isArray(sizeVariations) && sizeVariations.length > 0) {
       totalStock = sizeVariations.reduce((sum, sv) => sum + (parseInt(sv.stock) || 0), 0);
     }
 
-    // Validate required fields
-    if (!req.body.name || !req.body.name.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product name is required'
-      });
+    // Validation
+    const name = req.body.name?.trim();
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Product name is required' });
     }
 
     if (!req.body.category) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product category is required'
-      });
+      return res.status(400).json({ success: false, message: 'Product category is required' });
     }
 
-    if (!req.body.basePrice || isNaN(parseFloat(req.body.basePrice))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid base price is required'
-      });
+    const basePrice = parseFloat(req.body.basePrice);
+    if (isNaN(basePrice) || basePrice < 0) {
+      return res.status(400).json({ success: false, message: 'Valid base price is required' });
     }
 
-    if (!req.body.sku || !req.body.sku.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product SKU is required'
-      });
+    // Generate SKU if not provided or handle existing
+    let sku = req.body.sku?.trim();
+    if (!sku) {
+      // Auto-generate SKU
+      sku = 'ME-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+    }
+
+    // Check for duplicate SKU
+    const existingProduct = await Product.findOne({ sku });
+    if (existingProduct) {
+      // Append random suffix to make SKU unique
+      sku = sku + '-' + Math.random().toString(36).substring(2, 5).toUpperCase();
     }
 
     const productData = {
-      name: req.body.name.trim(),
-      description: req.body.description || 'No description provided',
-      shortDescription: req.body.shortDescription || '',
+      name,
+      description: req.body.description?.trim() || '',
+      shortDescription: req.body.shortDescription?.trim() || '',
       category: req.body.category,
-      basePrice: parseFloat(req.body.basePrice),
-      sku: req.body.sku.trim(),
-      fabric: req.body.fabric || '',
-      careInstructions: req.body.careInstructions || '',
+      basePrice,
+      sku,
+      fabric: req.body.fabric?.trim() || '',
+      careInstructions: req.body.careInstructions?.trim() || '',
       isActive: req.body.isActive === 'true' || req.body.isActive === true,
       isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
       isNewArrival: req.body.isNewArrival === 'true' || req.body.isNewArrival === true,
@@ -313,29 +292,47 @@ const createProduct = async (req, res) => {
       totalStock
     };
 
-    console.log('productData to save:', JSON.stringify(productData, null, 2));
+    console.log('Creating product:', name);
 
     const product = await Product.create(productData);
 
     console.log('Product created successfully:', product._id);
 
+    // Populate category before returning
+    const populatedProduct = await Product.findById(product._id).populate('category', 'name slug');
+
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
-      data: product
+      data: populatedProduct
     });
   } catch (error) {
-    console.error('=== CREATE PRODUCT ERROR ===');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    if (error.errors) {
-      console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+    console.error('Create product error:', error.message);
+    
+    // Handle duplicate key error (e.g., duplicate SKU or slug)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        success: false,
+        message: `A product with this ${field} already exists`,
+        error: error.message
+      });
     }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', '),
+        error: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to create product',
-      error: error.message,
-      details: error.errors || null
+      error: error.message
     });
   }
 };
@@ -345,99 +342,77 @@ const createProduct = async (req, res) => {
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
   try {
+    console.log('=== UPDATE PRODUCT ===');
+    console.log('Product ID:', req.params.id);
+    
     let product = await Product.findById(req.params.id);
-
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
+
+    // Safe JSON parse helper
+    const safeJsonParse = (value, defaultValue) => {
+      if (!value) return defaultValue;
+      if (typeof value !== 'string') return value;
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return defaultValue;
+      }
+    };
 
     // Parse JSON fields from FormData
-    let sizeVariations = product.sizeVariations;
-    let colors = product.colors;
-    let discount = product.discount;
+    let sizeVariations = safeJsonParse(req.body.sizeVariations, product.sizeVariations);
+    let colors = safeJsonParse(req.body.colors, product.colors);
+    let discount = safeJsonParse(req.body.discount, product.discount);
 
-    if (req.body.sizeVariations) {
-      try {
-        sizeVariations = typeof req.body.sizeVariations === 'string' 
-          ? JSON.parse(req.body.sizeVariations) 
-          : req.body.sizeVariations;
-      } catch (e) {
-        sizeVariations = product.sizeVariations;
+    // Handle images - start with existing product images
+    let images = [...product.images];
+    
+    // If existingImages is provided, use those (user may have removed some)
+    if (req.body.existingImages) {
+      const existingImages = safeJsonParse(req.body.existingImages, []);
+      if (Array.isArray(existingImages)) {
+        images = existingImages.map((img, index) => {
+          const url = typeof img === 'string' ? img : img.url;
+          return {
+            url,
+            alt: req.body.name || product.name || 'Product image',
+            isPrimary: index === 0
+          };
+        });
       }
     }
 
-    if (req.body.colors) {
-      try {
-        colors = typeof req.body.colors === 'string' 
-          ? JSON.parse(req.body.colors) 
-          : req.body.colors;
-      } catch (e) {
-        colors = product.colors;
-      }
-    }
-
-    if (req.body.discount) {
-      try {
-        discount = typeof req.body.discount === 'string' 
-          ? JSON.parse(req.body.discount) 
-          : req.body.discount;
-      } catch (e) {
-        discount = product.discount;
-      }
-    }
-
-    // Handle uploaded images
-    let images = product.images;
+    // Add newly uploaded images
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map((file, index) => ({
+      const newImages = req.files.map((file) => ({
         url: `/uploads/${file.filename}`,
         alt: req.body.name || product.name || 'Product image',
-        isPrimary: images.length === 0 && index === 0
+        isPrimary: images.length === 0 // First image is primary if no existing
       }));
       images = [...images, ...newImages];
+      console.log('Added', req.files.length, 'new images');
     }
 
-    // Handle existing images from form
-    if (req.body.existingImages) {
-      try {
-        const existingImages = typeof req.body.existingImages === 'string'
-          ? JSON.parse(req.body.existingImages)
-          : req.body.existingImages;
-        images = existingImages.map((url, index) => ({
-          url,
-          alt: req.body.name || product.name || 'Product image',
-          isPrimary: index === 0
-        }));
-        // Add new uploaded images
-        if (req.files && req.files.length > 0) {
-          const newImages = req.files.map((file) => ({
-            url: `/uploads/${file.filename}`,
-            alt: req.body.name || product.name || 'Product image',
-            isPrimary: false
-          }));
-          images = [...images, ...newImages];
-        }
-      } catch (e) {
-        // Keep existing images
-      }
+    // Ensure at least one image has isPrimary
+    if (images.length > 0 && !images.some(img => img.isPrimary)) {
+      images[0].isPrimary = true;
     }
 
     // Calculate total stock from size variations
     let totalStock = 0;
-    if (sizeVariations && sizeVariations.length > 0) {
+    if (Array.isArray(sizeVariations) && sizeVariations.length > 0) {
       totalStock = sizeVariations.reduce((sum, sv) => sum + (parseInt(sv.stock) || 0), 0);
     }
 
     const updateData = {
-      name: req.body.name || product.name,
+      name: req.body.name?.trim() || product.name,
       description: req.body.description !== undefined ? req.body.description : product.description,
       shortDescription: req.body.shortDescription !== undefined ? req.body.shortDescription : product.shortDescription,
       category: req.body.category || product.category,
       basePrice: req.body.basePrice ? parseFloat(req.body.basePrice) : product.basePrice,
-      sku: req.body.sku || product.sku,
+      sku: req.body.sku?.trim() || product.sku,
       fabric: req.body.fabric !== undefined ? req.body.fabric : product.fabric,
       careInstructions: req.body.careInstructions !== undefined ? req.body.careInstructions : product.careInstructions,
       isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : product.isActive,
@@ -455,7 +430,9 @@ const updateProduct = async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    );
+    ).populate('category', 'name slug');
+
+    console.log('Product updated successfully');
 
     res.json({
       success: true,
@@ -463,7 +440,16 @@ const updateProduct = async (req, res) => {
       data: product
     });
   } catch (error) {
-    console.error('Update product error:', error);
+    console.error('Update product error:', error.message);
+    
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        success: false,
+        message: `A product with this ${field} already exists`
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to update product',

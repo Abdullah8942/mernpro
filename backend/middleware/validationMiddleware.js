@@ -88,6 +88,23 @@ const orderValidation = [
   handleValidationErrors
 ];
 
+// Guest Order validation rules
+const guestOrderValidation = [
+  body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
+  body('items.*.product').notEmpty().isMongoId().withMessage('Valid Product ID is required'),
+  body('items.*.quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  body('shippingAddress.firstName').notEmpty().withMessage('First name is required'),
+  body('shippingAddress.lastName').notEmpty().withMessage('Last name is required'),
+  body('shippingAddress.email').isEmail().withMessage('Valid email is required'),
+  body('shippingAddress.phone').notEmpty().withMessage('Phone number is required'),
+  body('shippingAddress.street').notEmpty().withMessage('Street address is required'),
+  body('shippingAddress.city').notEmpty().withMessage('City is required'),
+  body('shippingAddress.state').notEmpty().withMessage('State is required'),
+  body('shippingAddress.postalCode').notEmpty().withMessage('Postal code is required'),
+  body('paymentMethod').isIn(['stripe', 'cod', 'bank_transfer']).withMessage('Invalid payment method'),
+  handleValidationErrors
+];
+
 // Review validation rules
 const reviewValidation = [
   body('rating')
@@ -112,6 +129,7 @@ module.exports = {
   productValidation,
   categoryValidation,
   orderValidation,
+  guestOrderValidation,
   reviewValidation,
   mongoIdValidation,
   handleValidationErrors

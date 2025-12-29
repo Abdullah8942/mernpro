@@ -183,8 +183,44 @@ const getStripeConfig = (req, res) => {
   });
 };
 
+// @desc    Create standalone payment intent for guest/direct payment
+// @route   POST /api/payment/create-payment-intent
+// @access  Public
+const createStandalonePaymentIntent = async (req, res) => {
+  try {
+    const stripe = getStripe();
+    const { amount, currency = 'pkr' } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid amount'
+      });
+    }
+
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount), // Amount in smallest currency unit (paisa for PKR)
+      currency: currency.toLowerCase(),
+    });
+
+    res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create payment intent',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createPaymentIntent,
+  createStandalonePaymentIntent,
   confirmPayment,
   stripeWebhook,
   getStripeConfig

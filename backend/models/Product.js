@@ -147,7 +147,7 @@ const productSchema = new mongoose.Schema({
 });
 
 // Generate slug and SKU before saving
-productSchema.pre('save', function(next) {
+productSchema.pre('save', async function() {
   if (this.isModified('name')) {
     this.slug = this.name
       .toLowerCase()
@@ -157,7 +157,6 @@ productSchema.pre('save', function(next) {
   if (!this.sku) {
     this.sku = 'ME-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
   }
-  next();
 });
 
 // Virtual for current price (with discount)

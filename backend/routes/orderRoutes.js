@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   createOrder,
+  createGuestOrder,
   getMyOrders,
   getOrderById,
   trackOrder,
@@ -12,10 +13,11 @@ const {
   getOrderStats
 } = require('../controllers/orderController');
 const { protect, admin } = require('../middleware/authMiddleware');
-const { orderValidation } = require('../middleware/validationMiddleware');
+const { orderValidation, guestOrderValidation } = require('../middleware/validationMiddleware');
 
-// Public route for order tracking
+// Public routes
 router.get('/track/:orderNumber', trackOrder);
+router.post('/guest', guestOrderValidation, createGuestOrder);
 
 // Protected routes
 router.post('/', protect, orderValidation, createOrder);

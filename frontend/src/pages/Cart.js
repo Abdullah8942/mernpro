@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineTrash, HiMinus, HiPlus, HiOutlineShoppingBag, HiOutlineArrowLeft } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import Loading from '../components/common/Loading';
+import { getImageUrl } from '../services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, loading, updateCartItem, removeFromCart, cartTotal } = useCart();
+  const { cart, loading, updateCartItem, removeFromCart } = useCart();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-PK', {
@@ -81,7 +82,7 @@ const Cart = () => {
                       <div className="md:col-span-6 flex gap-4">
                         <div className="w-24 h-28 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                           <img
-                            src={item.product?.images?.[0]?.url || '/images/placeholder.jpg'}
+                            src={getImageUrl(item.product?.images?.[0]?.url)}
                             alt={item.product?.name}
                             className="w-full h-full object-cover"
                           />

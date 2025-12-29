@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   HiOutlineSearch, HiOutlinePencil, HiOutlineTrash, HiOutlineUserCircle,
-  HiOutlineMail, HiOutlineShieldCheck, HiOutlineBan
+  HiOutlineShieldCheck, HiOutlineBan
 } from 'react-icons/hi';
 import { userAPI } from '../../services/api';
 import Loading from '../../components/common/Loading';
@@ -32,9 +32,9 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [filters]);
+  }, [filters, fetchUsers]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -51,7 +51,7 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleEdit = (user) => {
     setEditForm({

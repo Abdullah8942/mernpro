@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HiOutlineUpload, HiOutlineX, HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi';
 import { productAPI, categoryAPI } from '../../services/api';
@@ -50,18 +50,18 @@ const ProductForm = () => {
     if (isEdit) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, isEdit, fetchCategories, fetchProduct]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll();
       setCategories(response.data.data);
     } catch (err) {
       toast.error('Failed to fetch categories');
     }
-  };
+  }, []);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       const response = await productAPI.getById(id);
@@ -100,7 +100,7 @@ const ProductForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
   const validateForm = () => {
     const newErrors = {};

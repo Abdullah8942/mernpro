@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { 
   HiOutlineSearch, HiOutlineEye, HiOutlineTruck, HiOutlineCheck,
   HiOutlineX, HiOutlineFilter
 } from 'react-icons/hi';
-import { orderAPI } from '../../services/api';
+import { orderAPI, getImageUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
@@ -24,11 +24,7 @@ const Orders = () => {
     limit: 10,
   });
 
-  useEffect(() => {
-    fetchOrders();
-  }, [filters]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -45,7 +41,11 @@ const Orders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
@@ -172,8 +172,11 @@ const Orders = () => {
                       </td>
                       <td className="py-3 px-4">
                         <div>
-                          <p className="font-medium">{order.shippingAddress?.fullName}</p>
-                          <p className="text-xs text-gray-500">{order.user?.email}</p>
+                          <p className="font-medium">
+                            {order.shippingAddress?.firstName} {order.shippingAddress?.lastName}
+                            {order.isGuestOrder && <span className="ml-1 text-xs bg-yellow-100 text-yellow-700 px-1 rounded">Guest</span>}
+                          </p>
+                          <p className="text-xs text-gray-500">{order.user?.email || order.shippingAddress?.email || order.guestEmail}</p>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm">
@@ -292,7 +295,7 @@ const Orders = () => {
                   <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                     <div className="w-12 h-14 bg-gray-200 rounded overflow-hidden">
                       <img
-                        src={item.product?.images?.[0]?.url || '/images/placeholder.jpg'}
+                        src={getImageUrl(item.product?.images?.[0]?.url)}
                         alt={item.product?.name}
                         className="w-full h-full object-cover"
                       />

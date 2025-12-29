@@ -43,16 +43,16 @@ const Footer = () => {
               From bridal wear to casual chic, we bring your fashion dreams to life.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
                 <FaFacebookF className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
                 <FaInstagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
                 <FaPinterestP className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary-700 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
                 <FaTwitter className="w-4 h-4" />
               </a>
             </div>

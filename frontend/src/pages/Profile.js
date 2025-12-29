@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   HiOutlineUser, HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, 
   HiOutlinePencil, HiOutlineShoppingBag, HiOutlineHeart, HiOutlineCog,
-  HiOutlineLogout, HiPlus, HiOutlineTrash
+  HiOutlineLogout, HiPlus
 } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 import Loading from '../components/common/Loading';
 import Modal from '../components/common/Modal';
-import { authAPI, orderAPI } from '../services/api';
+import { authAPI, orderAPI, getImageUrl } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -41,15 +41,7 @@ const Profile = () => {
     isDefault: false,
   });
 
-  useEffect(() => {
-    if (activeTab === 'orders') {
-      fetchOrders();
-    } else if (activeTab === 'wishlist') {
-      fetchWishlist();
-    }
-  }, [activeTab]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await orderAPI.getMyOrders();
@@ -59,9 +51,9 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authAPI.getWishlist();
@@ -71,7 +63,15 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    } else if (activeTab === 'wishlist') {
+      fetchWishlist();
+    }
+  }, [activeTab, fetchOrders, fetchWishlist]);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -359,7 +359,7 @@ const Profile = () => {
                             {order.items.slice(0, 4).map((item, index) => (
                               <div key={index} className="flex-shrink-0 w-16 h-20 bg-gray-100 rounded overflow-hidden">
                                 <img
-                                  src={item.product?.images?.[0]?.url || '/images/placeholder.jpg'}
+                                  src={getImageUrl(item.product?.images?.[0]?.url)}
                                   alt={item.product?.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -480,7 +480,7 @@ const Profile = () => {
                         <div key={product._id} className="border rounded-lg overflow-hidden">
                           <div className="aspect-square bg-gray-100">
                             <img
-                              src={product.images?.[0]?.url || '/images/placeholder.jpg'}
+                              src={getImageUrl(product.images?.[0]?.url)}
                               alt={product.name}
                               className="w-full h-full object-cover"
                             />

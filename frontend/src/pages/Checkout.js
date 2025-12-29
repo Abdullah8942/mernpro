@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -6,7 +6,7 @@ import { HiOutlineCheck, HiOutlineTruck, HiOutlineCreditCard, HiOutlineShieldChe
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Loading from '../components/common/Loading';
-import { orderAPI, paymentAPI } from '../services/api';
+import { orderAPI, paymentAPI, getImageUrl } from '../services/api';
 import toast from 'react-hot-toast';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
@@ -30,30 +30,52 @@ const cardStyle = {
   },
 };
 
-const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess }) => {
+const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess, cart, isAuthenticated }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { cart, clearCart } = useCart();
+  const { clearCart } = useCart();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
 
   // Transform shipping address to match backend schema
   const transformShippingAddress = (address) => {
-    const nameParts = address.fullName?.split(' ') || [];
+    const nameParts = (address.fullName || '').split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || firstName;
     
     return {
       firstName,
       lastName,
-      email: address.email,
-      phone: address.phone,
-      street: address.addressLine1 + (address.addressLine2 ? `, ${address.addressLine2}` : ''),
-      city: address.city,
-      state: address.state,
-      postalCode: address.postalCode,
+      email: address.email || '',
+      phone: address.phone || '',
+      street: (address.addressLine1 || '') + (address.addressLine2 ? `, ${address.addressLine2}` : ''),
+      city: address.city || '',
+      state: address.state || '',
+      postalCode: address.postalCode || '',
       country: address.country || 'Pakistan',
     };
+  };
+
+  // Transform cart items for guest order
+  const transformCartItems = (items) => {
+    if (!items || !Array.isArray(items)) {
+      console.error('Invalid items:', items);
+      return [];
+    }
+    return items.map(item => {
+      const productId = item.product?._id || item.product;
+      console.log('Transforming item:', item, 'Product ID:', productId);
+      return {
+        product: productId,
+        name: item.product?.name || item.name || 'Product',
+        image: item.product?.images?.[0]?.url || item.image || '',
+        quantity: item.quantity || 1,
+        selectedSize: item.selectedSize || 'Standard',
+        selectedColor: item.selectedColor || null,
+        price: item.price || 0,
+        customMeasurements: item.customMeasurements || null
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -77,8 +99,8 @@ const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess }) => {
           payment_method: {
             card: elements.getElement(CardElement),
             billing_details: {
-              name: shippingAddress.fullName,
-              email: shippingAddress.email,
+              name: shippingAddress.fullName || '',
+              email: shippingAddress.email || '',
             },
           },
         });
@@ -98,11 +120,21 @@ const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess }) => {
               id: paymentIntent.id,
               status: paymentIntent.status,
               updateTime: new Date().toISOString(),
-              email: shippingAddress.email,
+              email: shippingAddress.email || '',
             },
           };
 
-          const response = await orderAPI.create(orderData);
+          let response;
+          // Check if cart has guest items (items with _id starting with 'guest_')
+          const hasGuestItems = cart?.items?.some(item => item._id?.toString().startsWith('guest_'));
+          
+          if (isAuthenticated && !hasGuestItems) {
+            response = await orderAPI.create(orderData);
+          } else {
+            orderData.items = transformCartItems(cart?.items || []);
+            response = await orderAPI.createGuestOrder(orderData);
+          }
+          
           await clearCart();
           onSuccess(response.data.data);
         }
@@ -113,12 +145,28 @@ const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess }) => {
           paymentMethod: 'cod',
         };
 
-        const response = await orderAPI.create(orderData);
+        let response;
+        // Check if cart has guest items (items with _id starting with 'guest_')
+        const hasGuestItems = cart?.items?.some(item => item._id?.toString().startsWith('guest_'));
+        
+        if (isAuthenticated && !hasGuestItems) {
+          // User is logged in and has items in backend cart
+          response = await orderAPI.create(orderData);
+        } else {
+          // Guest checkout OR authenticated user with guest cart items
+          const cartItems = cart?.items || [];
+          console.log('Guest/Local checkout - Cart items:', cartItems);
+          orderData.items = transformCartItems(cartItems);
+          console.log('Guest/Local checkout - Order data:', orderData);
+          response = await orderAPI.createGuestOrder(orderData);
+        }
+        
         await clearCart();
         onSuccess(response.data.data);
       }
     } catch (err) {
       console.error('Order error:', err);
+      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || 'Something went wrong');
     } finally {
       setProcessing(false);
@@ -165,7 +213,7 @@ const Checkout = () => {
   const [placedOrder, setPlacedOrder] = useState(null);
 
   const [shippingAddress, setShippingAddress] = useState({
-    fullName: user ? `${user.firstName} ${user.lastName}` : '',
+    fullName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
     email: user?.email || '',
     phone: user?.phone || '',
     addressLine1: '',
@@ -188,13 +236,13 @@ const Checkout = () => {
   const validateShipping = () => {
     const newErrors = {};
 
-    if (!shippingAddress.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!shippingAddress.email.trim()) newErrors.email = 'Email is required';
-    if (!shippingAddress.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!shippingAddress.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
-    if (!shippingAddress.city.trim()) newErrors.city = 'City is required';
-    if (!shippingAddress.state.trim()) newErrors.state = 'State is required';
-    if (!shippingAddress.postalCode.trim()) newErrors.postalCode = 'Postal code is required';
+    if (!(shippingAddress.fullName || '').trim()) newErrors.fullName = 'Full name is required';
+    if (!(shippingAddress.email || '').trim()) newErrors.email = 'Email is required';
+    if (!(shippingAddress.phone || '').trim()) newErrors.phone = 'Phone is required';
+    if (!(shippingAddress.addressLine1 || '').trim()) newErrors.addressLine1 = 'Address is required';
+    if (!(shippingAddress.city || '').trim()) newErrors.city = 'City is required';
+    if (!(shippingAddress.state || '').trim()) newErrors.state = 'State is required';
+    if (!(shippingAddress.postalCode || '').trim()) newErrors.postalCode = 'Postal code is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -353,8 +401,15 @@ const Checkout = () => {
                             key={address._id}
                             type="button"
                             onClick={() => setShippingAddress({
-                              ...address,
-                              email: user.email,
+                              fullName: address.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
+                              email: user.email || '',
+                              phone: address.phone || user.phone || '',
+                              addressLine1: address.addressLine1 || address.street || '',
+                              addressLine2: address.addressLine2 || '',
+                              city: address.city || '',
+                              state: address.state || '',
+                              postalCode: address.postalCode || '',
+                              country: address.country || 'Pakistan',
                             })}
                             className={`
                               p-3 border rounded-lg text-left transition-colors
@@ -391,7 +446,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           name="fullName"
-                          value={shippingAddress.fullName}
+                          value={shippingAddress.fullName || ''}
                           onChange={handleShippingChange}
                           className={`input ${errors.fullName ? 'border-red-500' : ''}`}
                         />
@@ -404,7 +459,7 @@ const Checkout = () => {
                         <input
                           type="email"
                           name="email"
-                          value={shippingAddress.email}
+                          value={shippingAddress.email || ''}
                           onChange={handleShippingChange}
                           className={`input ${errors.email ? 'border-red-500' : ''}`}
                         />
@@ -419,7 +474,7 @@ const Checkout = () => {
                       <input
                         type="tel"
                         name="phone"
-                        value={shippingAddress.phone}
+                        value={shippingAddress.phone || ''}
                         onChange={handleShippingChange}
                         className={`input ${errors.phone ? 'border-red-500' : ''}`}
                       />
@@ -433,7 +488,7 @@ const Checkout = () => {
                       <input
                         type="text"
                         name="addressLine1"
-                        value={shippingAddress.addressLine1}
+                        value={shippingAddress.addressLine1 || ''}
                         onChange={handleShippingChange}
                         placeholder="Street address"
                         className={`input ${errors.addressLine1 ? 'border-red-500' : ''}`}
@@ -448,7 +503,7 @@ const Checkout = () => {
                       <input
                         type="text"
                         name="addressLine2"
-                        value={shippingAddress.addressLine2}
+                        value={shippingAddress.addressLine2 || ''}
                         onChange={handleShippingChange}
                         placeholder="Apartment, suite, etc."
                         className="input"
@@ -463,7 +518,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           name="city"
-                          value={shippingAddress.city}
+                          value={shippingAddress.city || ''}
                           onChange={handleShippingChange}
                           className={`input ${errors.city ? 'border-red-500' : ''}`}
                         />
@@ -476,7 +531,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           name="state"
-                          value={shippingAddress.state}
+                          value={shippingAddress.state || ''}
                           onChange={handleShippingChange}
                           className={`input ${errors.state ? 'border-red-500' : ''}`}
                         />
@@ -492,7 +547,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           name="postalCode"
-                          value={shippingAddress.postalCode}
+                          value={shippingAddress.postalCode || ''}
                           onChange={handleShippingChange}
                           className={`input ${errors.postalCode ? 'border-red-500' : ''}`}
                         />
@@ -505,7 +560,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           name="country"
-                          value={shippingAddress.country}
+                          value={shippingAddress.country || 'Pakistan'}
                           onChange={handleShippingChange}
                           className="input"
                           disabled
@@ -597,6 +652,8 @@ const Checkout = () => {
                       paymentMethod={paymentMethod}
                       total={total}
                       onSuccess={handleOrderSuccess}
+                      cart={cart}
+                      isAuthenticated={isAuthenticated}
                     />
                   </Elements>
 
@@ -621,7 +678,7 @@ const Checkout = () => {
                   <div key={item._id} className="flex gap-3">
                     <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                       <img
-                        src={item.product?.images?.[0]?.url || '/images/placeholder.jpg'}
+                        src={getImageUrl(item.product?.images?.[0]?.url)}
                         alt={item.product?.name}
                         className="w-full h-full object-cover"
                       />

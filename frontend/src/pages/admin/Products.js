@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch,
-  HiOutlineFilter, HiOutlineEye, HiOutlinePhotograph
+  HiOutlineFilter, HiOutlineEye, HiOutlinePhotograph, HiOutlineEyeOff
 } from 'react-icons/hi';
-import { productAPI, categoryAPI } from '../../services/api';
+import { productAPI, categoryAPI, getImageUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
@@ -15,7 +15,7 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({});
-  const [deleteModal, setDeleteModal] = useState({ open: false, product: null });
+  const [deleteModal, setDeleteModal] = useState({ open: false, product: null, permanent: false });
 
   const [filters, setFilters] = useState({
     search: '',
@@ -25,12 +25,7 @@ const Products = () => {
     limit: 10,
   });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, [filters]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -49,22 +44,42 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll();
       setCategories(response.data.data);
     } catch (err) {
       console.error('Failed to fetch categories');
     }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
+
+  const handleToggleStatus = async (product) => {
+    try {
+      await productAPI.update(product._id, { isActive: !product.isActive });
+      toast.success(product.isActive ? 'Product deactivated' : 'Product activated');
+      fetchProducts();
+    } catch (err) {
+      toast.error('Failed to update product status');
+    }
   };
 
   const handleDelete = async () => {
     try {
-      await productAPI.delete(deleteModal.product._id);
-      toast.success('Product deleted successfully');
-      setDeleteModal({ open: false, product: null });
+      if (deleteModal.permanent) {
+        await productAPI.delete(deleteModal.product._id);
+        toast.success('Product permanently deleted');
+      } else {
+        await productAPI.update(deleteModal.product._id, { isActive: false });
+        toast.success('Product deactivated');
+      }
+      setDeleteModal({ open: false, product: null, permanent: false });
       fetchProducts();
     } catch (err) {
       toast.error('Failed to delete product');
@@ -175,7 +190,7 @@ const Products = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-14 bg-gray-100 rounded overflow-hidden">
                             <img
-                              src={product.images?.[0]?.url || '/images/placeholder.jpg'}
+                              src={getImageUrl(product.images?.[0]?.url)}
                               alt={product.name}
                               className="w-full h-full object-cover"
                             />
@@ -216,18 +231,28 @@ const Products = () => {
                             to={`/product/${product.slug}`}
                             target="_blank"
                             className="p-2 text-gray-400 hover:text-primary-600"
+                            title="View"
                           >
                             <HiOutlineEye className="w-5 h-5" />
                           </Link>
                           <Link
                             to={`/admin/products/${product._id}/edit`}
                             className="p-2 text-gray-400 hover:text-primary-600"
+                            title="Edit"
                           >
                             <HiOutlinePencil className="w-5 h-5" />
                           </Link>
                           <button
-                            onClick={() => setDeleteModal({ open: true, product })}
+                            onClick={() => handleToggleStatus(product)}
+                            className={`p-2 ${product.isActive ? 'text-gray-400 hover:text-yellow-600' : 'text-gray-400 hover:text-green-600'}`}
+                            title={product.isActive ? 'Deactivate' : 'Activate'}
+                          >
+                            {product.isActive ? <HiOutlineEyeOff className="w-5 h-5" /> : <HiOutlineEye className="w-5 h-5" />}
+                          </button>
+                          <button
+                            onClick={() => setDeleteModal({ open: true, product, permanent: false })}
                             className="p-2 text-gray-400 hover:text-red-600"
+                            title="Delete"
                           >
                             <HiOutlineTrash className="w-5 h-5" />
                           </button>
@@ -271,27 +296,46 @@ const Products = () => {
       {/* Delete Modal */}
       <Modal
         isOpen={deleteModal.open}
-        onClose={() => setDeleteModal({ open: false, product: null })}
+        onClose={() => setDeleteModal({ open: false, product: null, permanent: false })}
         title="Delete Product"
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Are you sure you want to delete <strong>{deleteModal.product?.name}</strong>? This action cannot be undone.
+            What would you like to do with <strong>{deleteModal.product?.name}</strong>?
           </p>
-          <div className="flex gap-4">
+          
+          <div className="space-y-3">
             <button
-              onClick={handleDelete}
-              className="flex-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition-colors"
+              onClick={() => {
+                setDeleteModal(prev => ({ ...prev, permanent: false }));
+                handleDelete();
+              }}
+              className="w-full bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2"
             >
-              Delete
+              <HiOutlineEyeOff className="w-5 h-5" />
+              Deactivate (Soft Delete)
             </button>
+            <p className="text-xs text-gray-500 text-center">Product will be hidden from shop but data is preserved</p>
+            
             <button
-              onClick={() => setDeleteModal({ open: false, product: null })}
-              className="flex-1 btn-outline"
+              onClick={() => {
+                setDeleteModal(prev => ({ ...prev, permanent: true }));
+                handleDelete();
+              }}
+              className="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
             >
-              Cancel
+              <HiOutlineTrash className="w-5 h-5" />
+              Permanently Delete
             </button>
+            <p className="text-xs text-red-500 text-center">This action cannot be undone!</p>
           </div>
+          
+          <button
+            onClick={() => setDeleteModal({ open: false, product: null, permanent: false })}
+            className="w-full btn-outline"
+          >
+            Cancel
+          </button>
         </div>
       </Modal>
     </div>

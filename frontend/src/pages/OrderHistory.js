@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   HiOutlineClipboardList, HiOutlineChevronRight, HiOutlineEye,
@@ -19,9 +19,9 @@ const OrderHistory = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [filter, currentPage]);
+  }, [filter, currentPage, fetchOrders]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -41,7 +41,7 @@ const OrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, currentPage]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-PK', {

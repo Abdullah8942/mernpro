@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -8,6 +9,29 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+/**
+ * Get the full URL for an image
+ * Handles both relative paths (from backend) and absolute URLs
+ * @param {string} imageUrl - The image URL or path
+ * @returns {string} The full image URL
+ */
+export const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return '/images/placeholder.jpg';
+  
+  // If it's already an absolute URL (http/https), return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path starting with /uploads, prepend backend URL
+  if (imageUrl.startsWith('/uploads')) {
+    return `${BACKEND_URL}${imageUrl}`;
+  }
+  
+  // For other paths (like /images/...), return as-is (served by frontend)
+  return imageUrl;
+};
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
@@ -65,27 +89,40 @@ export const productAPI = {
   // Admin
   getAllAdmin: (params) => api.get('/products/admin/all', { params }),
   create: (data) => {
-    // Check if data is FormData - don't set Content-Type, let browser set it with boundary
+    // For FormData, use axios directly to avoid default Content-Type header
     if (data instanceof FormData) {
-      return api.post('/products', data, {
-        headers: { 'Content-Type': undefined }
+      const token = localStorage.getItem('token');
+      return axios.post(`${API_URL}/products`, data, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          // Let browser set Content-Type with boundary for multipart/form-data
+        },
       });
     }
     return api.post('/products', data);
   },
   update: (id, data) => {
-    // Check if data is FormData - don't set Content-Type, let browser set it with boundary
+    // For FormData, use axios directly to avoid default Content-Type header
     if (data instanceof FormData) {
-      return api.put(`/products/${id}`, data, {
-        headers: { 'Content-Type': undefined }
+      const token = localStorage.getItem('token');
+      return axios.put(`${API_URL}/products/${id}`, data, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          // Let browser set Content-Type with boundary for multipart/form-data
+        },
       });
     }
     return api.put(`/products/${id}`, data);
   },
   delete: (id) => api.delete(`/products/${id}`),
-  uploadImages: (formData) => api.post('/products/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  uploadImages: (formData) => {
+    const token = localStorage.getItem('token');
+    return axios.post(`${API_URL}/products/upload`, formData, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+    });
+  },
 };
 
 // Category APIs
@@ -115,6 +152,7 @@ export const cartAPI = {
 // Order APIs
 export const orderAPI = {
   create: (data) => api.post('/orders', data),
+  createGuestOrder: (data) => api.post('/orders/guest', data),
   getAll: (params) => api.get('/orders/admin/all', { params }),
   getMyOrders: (params) => api.get('/orders', { params }),
   getById: (id) => api.get(`/orders/${id}`),
@@ -144,6 +182,7 @@ export const reviewAPI = {
 export const paymentAPI = {
   getConfig: () => api.get('/payment/config'),
   createIntent: (orderId) => api.post('/payment/create-intent', { orderId }),
+  createPaymentIntent: (amount, currency = 'pkr') => api.post('/payment/create-payment-intent', { amount, currency }),
   confirmPayment: (orderId, paymentIntentId) => api.post('/payment/confirm', { orderId, paymentIntentId }),
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { HiOutlineAdjustments, HiOutlineX, HiOutlineChevronDown } from 'react-icons/hi';
 import ProductCard from '../components/products/ProductCard';
@@ -39,22 +39,22 @@ const Shop = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   useEffect(() => {
     fetchProducts();
-  }, [searchParams]);
+  }, [fetchProducts]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll();
       setCategories(response.data.data);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     }
-  };
+  }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -83,7 +83,7 @@ const Shop = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

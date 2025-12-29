@@ -17,7 +17,7 @@ const createOrder = async (req, res) => {
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Cart is empty'
+        message: 'Your cart is empty. Please add items before checkout.'
       });
     }
 
@@ -45,10 +45,10 @@ const createOrder = async (req, res) => {
         name: product.name,
         image: product.images[0]?.url || '',
         quantity: item.quantity,
-        selectedSize: item.selectedSize,
-        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize || 'Standard',
+        selectedColor: item.selectedColor || null,
         price: item.price,
-        customMeasurements: item.customMeasurements
+        customMeasurements: item.customMeasurements || null
       });
     }
 
@@ -522,8 +522,112 @@ const getOrderStats = async (req, res) => {
   }
 };
 
+// @desc    Create guest order (without authentication)
+// @route   POST /api/orders/guest
+// @access  Public
+const createGuestOrder = async (req, res) => {
+  try {
+    const { items, shippingAddress, billingAddress, paymentMethod, notes, isGift, giftMessage, paymentResult } = req.body;
+
+    // Validate items
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No items provided'
+      });
+    }
+
+    // Validate stock and build order items
+    const orderItems = [];
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+
+      if (!product || !product.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: `Product ${item.name || 'Unknown'} is no longer available`
+        });
+      }
+
+      if (product.totalStock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.name}`
+        });
+      }
+
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        image: item.image || product.images[0]?.url || '',
+        quantity: item.quantity,
+        selectedSize: item.selectedSize || 'Standard',
+        selectedColor: item.selectedColor || null,
+        price: item.price || product.salePrice || product.basePrice,
+        customMeasurements: item.customMeasurements || null
+      });
+    }
+
+    // Calculate totals
+    const subtotal = orderItems.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+
+    // Calculate shipping (free over 5000 PKR)
+    const shippingCost = subtotal >= 5000 ? 0 : 200;
+
+    // Tax (if applicable)
+    const taxAmount = 0;
+
+    const totalAmount = subtotal + shippingCost + taxAmount;
+
+    // Create order
+    const order = await Order.create({
+      user: null,
+      isGuestOrder: true,
+      guestEmail: shippingAddress.email,
+      items: orderItems,
+      shippingAddress,
+      billingAddress: billingAddress || shippingAddress,
+      paymentMethod,
+      paymentResult: paymentResult || null,
+      subtotal,
+      shippingCost,
+      taxAmount,
+      discount: 0,
+      totalAmount,
+      notes,
+      isGift,
+      giftMessage,
+      orderStatus: 'pending',
+      isPaid: paymentMethod === 'stripe' && paymentResult?.status === 'succeeded'
+    });
+
+    // Update product stock
+    for (const item of orderItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { totalStock: -item.quantity, sold: item.quantity }
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Order placed successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Guest order error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createOrder,
+  createGuestOrder,
   getMyOrders,
   getOrderById,
   trackOrder,

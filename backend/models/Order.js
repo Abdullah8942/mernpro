@@ -18,24 +18,19 @@ const orderItemSchema = new mongoose.Schema({
   },
   selectedSize: {
     type: String,
-    required: true
+    default: 'Standard'
   },
   selectedColor: {
-    name: String,
-    hexCode: String
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   price: {
     type: Number,
     required: true
   },
   customMeasurements: {
-    chest: Number,
-    waist: Number,
-    hips: Number,
-    length: Number,
-    shoulders: Number,
-    sleeves: Number,
-    notes: String
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   }
 });
 
@@ -43,7 +38,16 @@ const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false,
+    default: null
+  },
+  isGuestOrder: {
+    type: Boolean,
+    default: false
+  },
+  guestEmail: {
+    type: String,
+    default: null
   },
   orderNumber: {
     type: String,
@@ -139,24 +143,22 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Generate order number before saving
-orderSchema.pre('save', function(next) {
+orderSchema.pre('save', async function() {
   if (!this.orderNumber) {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     this.orderNumber = `ME-${timestamp}-${random}`;
   }
-  next();
 });
 
 // Add status to history when status changes
-orderSchema.pre('save', function(next) {
+orderSchema.pre('save', async function() {
   if (this.isModified('orderStatus')) {
     this.statusHistory.push({
       status: this.orderStatus,
       timestamp: new Date()
     });
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);

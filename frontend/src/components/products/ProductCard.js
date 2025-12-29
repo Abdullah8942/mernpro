@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { HiOutlineHeart, HiHeart, HiOutlineShoppingBag, HiOutlineStar, HiStar } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { getImageUrl } from '../../services/api';
 
 const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
   const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
 
-  const primaryImage = product.images?.find(img => img.isPrimary)?.url || product.images?.[0]?.url || '/images/placeholder.jpg';
+  const primaryImageUrl = product.images?.find(img => img.isPrimary)?.url || product.images?.[0]?.url;
+  const primaryImage = getImageUrl(primaryImageUrl);
   
   // Calculate current price
   let currentPrice = product.basePrice;

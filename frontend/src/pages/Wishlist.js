@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  HiOutlineHeart, HiOutlineShoppingCart, HiOutlineTrash, 
+  HiOutlineHeart, HiOutlineShoppingCart, 
   HiOutlineChevronRight, HiOutlineEye, HiOutlineX
 } from 'react-icons/hi';
-import { authAPI } from '../services/api';
+import { authAPI, getImageUrl } from '../services/api';
 import { useCart } from '../context/CartContext';
 import Loading from '../components/common/Loading';
 import toast from 'react-hot-toast';
@@ -17,9 +17,9 @@ const Wishlist = () => {
 
   useEffect(() => {
     fetchWishlist();
-  }, []);
+  }, [fetchWishlist]);
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authAPI.getWishlist();
@@ -30,7 +30,7 @@ const Wishlist = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleRemoveFromWishlist = async (productId) => {
     try {
@@ -129,7 +129,7 @@ const Wishlist = () => {
                 {/* Product Image */}
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <img
-                    src={product.images?.[0]?.url || '/images/placeholder.jpg'}
+                    src={getImageUrl(product.images?.[0]?.url)}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
