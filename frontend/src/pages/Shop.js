@@ -37,14 +37,6 @@ const Shop = () => {
     { value: 'popular', label: 'Most Popular' },
   ];
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
   const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll();
@@ -84,6 +76,14 @@ const Shop = () => {
       setLoading(false);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

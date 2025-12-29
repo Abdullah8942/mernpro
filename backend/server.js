@@ -16,6 +16,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes');
 
 // Import error middleware
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -47,6 +48,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

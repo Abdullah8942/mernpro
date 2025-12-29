@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
+const { sendOrderNotification, sendOrderConfirmation } = require('../utils/emailService');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -116,6 +117,13 @@ const createOrder = async (req, res) => {
     // Populate order
     const populatedOrder = await Order.findById(order._id)
       .populate('user', 'firstName lastName email');
+
+    // Send email notifications (non-blocking)
+    const customerEmail = req.user?.email || shippingAddress?.email;
+    if (customerEmail) {
+      sendOrderNotification(populatedOrder).catch(console.error);
+      sendOrderConfirmation(populatedOrder, customerEmail).catch(console.error);
+    }
 
     res.status(201).json({
       success: true,
@@ -608,6 +616,13 @@ const createGuestOrder = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { totalStock: -item.quantity, sold: item.quantity }
       });
+    }
+
+    // Send email notifications for guest order (non-blocking)
+    const customerEmail = shippingAddress?.email;
+    if (customerEmail) {
+      sendOrderNotification(order).catch(console.error);
+      sendOrderConfirmation(order, customerEmail).catch(console.error);
     }
 
     res.status(201).json({

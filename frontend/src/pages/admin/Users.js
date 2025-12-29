@@ -30,10 +30,6 @@ const Users = () => {
     isActive: true,
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [filters, fetchUsers]);
-
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -52,6 +48,10 @@ const Users = () => {
       setLoading(false);
     }
   }, [filters]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [filters, fetchUsers]);
 
   const handleEdit = (user) => {
     setEditForm({

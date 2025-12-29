@@ -13,11 +13,11 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { name: 'Shalwar Kameez', slug: 'shalwar-kameez' },
-    { name: 'Bridal', slug: 'bridal' },
-    { name: 'Formal', slug: 'formal-wear' },
-    { name: 'Casual', slug: 'casual-wear' },
+    { name: 'Casual Wear', slug: 'casual' },
     { name: 'Party Wear', slug: 'party-wear' },
+    { name: 'Formal', slug: 'formal' },
+    { name: 'Bridal', slug: 'bridal' },
+    { name: 'Festive', slug: 'festive' },
     { name: 'New Arrivals', slug: 'new-arrivals' },
   ];
 
@@ -31,28 +31,30 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl shadow-sm border-b border-white/20 transition-all duration-300">
       {/* Top bar */}
-      <div className="bg-primary-800 text-white text-center py-2 text-sm">
-        <p>Free Shipping on Orders Over PKR 5,000 | Use Code: MERAAB10 for 10% Off</p>
+      <div className="bg-gradient-to-r from-primary-900/95 via-primary-800/95 to-primary-900/95 backdrop-blur-sm text-white text-center py-2.5 text-sm">
+        <p className="animate-pulse">✨ Free Shipping on Orders Over PKR 5,000 | Use Code: <span className="font-bold">MERAAB10</span> for 10% Off ✨</p>
       </div>
 
-      <nav className="container-custom">
+      <nav className="container-custom bg-transparent">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-primary-700">
-              Meraab <span className="text-gold-500">&</span> Emaan
+          <Link to="/" className="flex items-center group">
+            <h1 className="text-2xl md:text-3xl font-display font-bold">
+              <span className="text-primary-700 group-hover:text-primary-600 transition-colors">Meraab</span>
+              <span className="text-gold-500 group-hover:text-gold-600 transition-colors"> & </span>
+              <span className="text-primary-700 group-hover:text-primary-600 transition-colors">Emaan</span>
             </h1>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-6">
             {categories.map((category) => (
               <Link
                 key={category.slug}
                 to={`/shop?category=${category.slug}`}
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="relative text-gray-700 hover:text-primary-600 font-medium transition-colors underline-animate py-2"
               >
                 {category.name}
               </Link>

@@ -1,29 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker } from 'react-icons/hi';
 import { FaFacebookF, FaInstagram, FaPinterestP, FaTwitter } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+import { newsletterAPI } from '../../services/api';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter your email');
+      return;
+    }
+    try {
+      setSubscribing(true);
+      await newsletterAPI.subscribe(email);
+      toast.success('Successfully subscribed! Check your email.');
+      setEmail('');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to subscribe');
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   return (
-    <footer className="bg-secondary-900 text-white">
+    <footer className="bg-gradient-to-b from-secondary-800 to-secondary-900 text-white">
       {/* Newsletter Section */}
-      <div className="bg-primary-700">
-        <div className="container-custom py-12">
+      <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-gold-400 rounded-full filter blur-3xl"></div>
+        </div>
+        <div className="container-custom py-12 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-2xl font-display font-semibold">Subscribe to Our Newsletter</h3>
-              <p className="text-primary-100 mt-1">Get updates on new arrivals and exclusive offers</p>
+            <div className="text-center md:text-left">
+              <h3 className="text-2xl font-display font-semibold">Join Our Fashion Family</h3>
+              <p className="text-primary-100 mt-1">Be the first to know about new arrivals & exclusive offers</p>
             </div>
-            <form className="flex w-full md:w-auto">
+            <form className="flex w-full md:w-auto" onSubmit={handleSubscribe}>
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="px-4 py-3 w-full md:w-80 rounded-l-md text-gray-800 focus:outline-none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="px-5 py-3.5 w-full md:w-80 rounded-l-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-gold-400 transition-all"
               />
-              <button type="submit" className="bg-gold-500 hover:bg-gold-600 px-6 py-3 rounded-r-md font-medium transition-colors">
-                Subscribe
+              <button 
+                type="submit" 
+                disabled={subscribing}
+                className="bg-gold-500 hover:bg-gold-600 px-8 py-3.5 rounded-r-full font-semibold transition-all hover:shadow-lg hover:shadow-gold-500/30 btn-ripple disabled:opacity-50"
+              >
+                {subscribing ? '...' : 'Subscribe'}
               </button>
             </form>
           </div>
@@ -60,25 +92,28 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-6 relative inline-block">
+              Quick Links
+              <span className="absolute -bottom-1 left-0 w-8 h-0.5 bg-gold-500"></span>
+            </h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/shop" className="text-gray-400 hover:text-white transition-colors">Shop All</Link>
+                <Link to="/shop" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">Shop All</Link>
               </li>
               <li>
-                <Link to="/shop?category=new-arrivals" className="text-gray-400 hover:text-white transition-colors">New Arrivals</Link>
+                <Link to="/shop?category=casual" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">Casual Wear</Link>
               </li>
               <li>
-                <Link to="/shop?category=bridal" className="text-gray-400 hover:text-white transition-colors">Bridal Collection</Link>
+                <Link to="/shop?category=party-wear" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">Party Wear</Link>
               </li>
               <li>
-                <Link to="/shop?featured=true" className="text-gray-400 hover:text-white transition-colors">Featured Products</Link>
+                <Link to="/shop?category=bridal" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">Bridal Collection</Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link>
+                <Link to="/shop?category=formal" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">Formal Wear</Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link>
+                <Link to="/shop?category=new-arrivals" className="text-gray-400 hover:text-gold-400 transition-colors hover:translate-x-1 inline-block">New Arrivals</Link>
               </li>
             </ul>
           </div>

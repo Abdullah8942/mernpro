@@ -15,10 +15,6 @@ const Wishlist = () => {
   const [removingId, setRemovingId] = useState(null);
   const { addToCart } = useCart();
 
-  useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
-
   const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
@@ -31,6 +27,10 @@ const Wishlist = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const handleRemoveFromWishlist = async (productId) => {
     try {

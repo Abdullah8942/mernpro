@@ -5,29 +5,29 @@ import {
   HiOutlineShieldCheck, HiOutlineCreditCard, HiOutlineSparkles,
   HiOutlineStar, HiOutlineHeart
 } from 'react-icons/hi';
+import toast from 'react-hot-toast';
 import ProductCard from '../components/products/ProductCard';
 import Loading from '../components/common/Loading';
-import { productAPI, categoryAPI } from '../services/api';
+import { productAPI, newsletterAPI } from '../services/api';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [featuredRes, newRes, catRes] = await Promise.all([
+        const [featuredRes, newRes] = await Promise.all([
           productAPI.getFeatured(8),
           productAPI.getNewArrivals(8),
-          categoryAPI.getAll(),
         ]);
 
         setFeaturedProducts(featuredRes.data.data || []);
         setNewArrivals(newRes.data.data || []);
-        setCategories(catRes.data.data || []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -44,14 +44,21 @@ const Home = () => {
 
   return (
     <div className="overflow-hidden">
-      {/* Hero Section - Full Width Modern Design */}
+      {/* Hero Section - Full Width Modern Design with 4K Background */}
       <section className="relative min-h-screen flex items-center">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900">
-          <div className="absolute inset-0 opacity-30">
+        {/* 4K Pakistani Fashion Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=3840&auto=format&fit=crop')`,
+          }}
+        >
+          {/* Dark Overlay for Better Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40"></div>
+          {/* Decorative Elements */}
+          <div className="absolute inset-0 opacity-20">
             <div className="absolute top-20 left-10 w-72 h-72 bg-gold-500 rounded-full filter blur-3xl animate-pulse"></div>
             <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary-500 rounded-full filter blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent-500 rounded-full filter blur-3xl animate-pulse" style={{animationDelay: '0.5s'}}></div>
           </div>
         </div>
         
@@ -177,41 +184,65 @@ const Home = () => {
       <section className="py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-4">
-              Categories
+            <span className="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              Collections
             </span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-800 mb-4">
-              Shop by Category
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-800 mb-4 animate-fade-in-up">
+              Shop by Style
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Explore our diverse collection of traditional and contemporary designs
+            <p className="text-gray-600 max-w-2xl mx-auto text-lg animate-fade-in-up delay-200">
+              Discover our stunning collection of women's fashion for every occasion
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" style={{ perspective: '1000px' }}>
             {[
-              { name: 'Women', slug: 'women', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=500&fit=crop' },
-              { name: 'Men', slug: 'men', image: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=500&fit=crop' },
-              { name: 'Kids', slug: 'kids', image: 'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=400&h=500&fit=crop' },
-              { name: 'Accessories', slug: 'accessories', image: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=400&h=500&fit=crop' },
+              { name: 'Casual Wear', slug: 'casual', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&h=1000&fit=crop', color: 'from-emerald-600/90' },
+              { name: 'Party Wear', slug: 'party-wear', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800&h=1000&fit=crop', color: 'from-fuchsia-600/90' },
+              { name: 'Formal', slug: 'formal', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&h=1000&fit=crop', color: 'from-slate-700/90' },
+              { name: 'Bridal', slug: 'bridal', image: 'https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=800&h=1000&fit=crop', color: 'from-rose-600/90' },
+              { name: 'Festive', slug: 'festive', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&h=1000&fit=crop', color: 'from-amber-600/90' },
+              { name: 'New Arrivals', slug: 'new-arrivals', image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&h=1000&fit=crop', color: 'from-cyan-600/90' },
             ].map((category, index) => (
               <Link
                 key={index}
                 to={`/shop?category=${category.slug}`}
-                className="group relative rounded-2xl overflow-hidden aspect-[4/5] transform hover:-translate-y-2 transition-all duration-500"
+                className="category-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl"
+                style={{ 
+                  animationDelay: `${index * 150}ms`,
+                  transform: 'translateZ(0)',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-12px) rotateX(5deg) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                  e.currentTarget.style.boxShadow = '';
+                }}
               >
+                {/* Image with zoom effect */}
                 <img
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-115"
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="font-display text-2xl font-bold mb-1">{category.name}</h3>
-                  <p className="text-gray-300 flex items-center gap-2">
-                    {categories.find(c => c.slug === category.slug)?.productCount || 'New'} Products
-                    <HiOutlineArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                  </p>
+                {/* Gradient overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-t ${category.color} via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500`}></div>
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-tr from-transparent via-white/10 to-transparent"></div>
+                {/* Content */}
+                <div className="absolute inset-0 flex items-end justify-center pb-8">
+                  <div className="text-center transform transition-all duration-500 group-hover:-translate-y-2">
+                    <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-3 drop-shadow-lg">
+                      {category.name}
+                    </h3>
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                      Explore <HiOutlineArrowRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -384,17 +415,39 @@ const Home = () => {
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Subscribe to get exclusive offers, early access to new collections, and styling tips.
           </p>
-          <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
+          <form 
+            className="max-w-md mx-auto flex flex-col sm:flex-row gap-3"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newsletterEmail) {
+                toast.error('Please enter your email');
+                return;
+              }
+              try {
+                setSubscribing(true);
+                await newsletterAPI.subscribe(newsletterEmail);
+                toast.success('Successfully subscribed! Check your email for confirmation.');
+                setNewsletterEmail('');
+              } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
+              } finally {
+                setSubscribing(false);
+              }
+            }}
+          >
             <input
               type="email"
               placeholder="Enter your email"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
               className="flex-1 px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold-500"
             />
             <button 
-              type="submit" 
-              className="px-8 py-4 bg-gold-500 text-white font-semibold rounded-full hover:bg-gold-600 transition-colors"
+              type="submit"
+              disabled={subscribing}
+              className="px-8 py-4 bg-gold-500 text-white font-semibold rounded-full hover:bg-gold-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Subscribe
+              {subscribing ? 'Subscribing...' : 'Subscribe'}
             </button>
           </form>
         </div>

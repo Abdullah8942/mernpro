@@ -17,10 +17,6 @@ const OrderHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [filter, currentPage, fetchOrders]);
-
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -42,6 +38,10 @@ const OrderHistory = () => {
       setLoading(false);
     }
   }, [filter, currentPage]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [filter, currentPage, fetchOrders]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-PK', {

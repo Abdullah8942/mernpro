@@ -56,19 +56,22 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
   return (
     <div className="group">
       <Link to={`/product/${product.slug}`} className="block">
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden hover-lift hover:shadow-xl">
           {/* Image Container */}
           <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
             <img
               src={primaryImage}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
+            
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
             
             {/* Badges */}
             <div className="absolute top-3 left-3 flex flex-col gap-2">
               {hasDiscount && (
-                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
                   {product.discount.type === 'percentage' 
                     ? `-${product.discount.value}%` 
                     : `-${formatPrice(product.discount.value)}`
@@ -76,26 +79,26 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
                 </span>
               )}
               {product.isNewArrival && (
-                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                   NEW
                 </span>
               )}
               {product.isBestSeller && (
-                <span className="bg-gold-500 text-white text-xs font-bold px-2 py-1 rounded">
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                   BESTSELLER
                 </span>
               )}
             </div>
 
             {/* Quick Actions */}
-            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
               {isAuthenticated && (
                 <button
                   onClick={handleWishlistClick}
-                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-primary-50 transition-colors"
+                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-50 hover:scale-110 transition-all duration-300"
                 >
                   {isInWishlist ? (
-                    <HiHeart className="w-5 h-5 text-red-500" />
+                    <HiHeart className="w-5 h-5 text-red-500 animate-heartbeat" />
                   ) : (
                     <HiOutlineHeart className="w-5 h-5 text-gray-600" />
                   )}
@@ -107,7 +110,7 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
             <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
               <button
                 onClick={handleQuickAdd}
-                className="w-full bg-primary-600 text-white py-3 rounded-md font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-lg font-medium hover:from-primary-700 hover:to-primary-800 transition-all flex items-center justify-center gap-2 shadow-lg btn-ripple"
               >
                 <HiOutlineShoppingBag className="w-5 h-5" />
                 Quick Add
@@ -116,8 +119,8 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
 
             {/* Out of Stock Overlay */}
             {product.totalStock === 0 && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <span className="bg-white text-gray-800 px-4 py-2 rounded font-medium">
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+                <span className="bg-white text-gray-800 px-4 py-2 rounded-full font-medium shadow-lg">
                   Out of Stock
                 </span>
               </div>
@@ -127,12 +130,12 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
           {/* Product Info */}
           <div className="p-4">
             {/* Category */}
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+            <p className="text-xs text-primary-500 uppercase tracking-wider mb-1 font-medium">
               {product.category?.name}
             </p>
 
             {/* Name */}
-            <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+            <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors duration-300">
               {product.name}
             </h3>
 
@@ -154,7 +157,7 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
 
             {/* Price */}
             <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold text-primary-700">
+              <span className="text-lg font-bold text-primary-700">
                 {formatPrice(currentPrice)}
               </span>
               {hasDiscount && (
@@ -166,17 +169,17 @@ const ProductCard = ({ product, onWishlistToggle, isInWishlist = false }) => {
 
             {/* Colors Preview */}
             {product.colors?.length > 0 && (
-              <div className="flex items-center gap-1 mt-3">
+              <div className="flex items-center gap-1.5 mt-3">
                 {product.colors.slice(0, 5).map((color, index) => (
                   <span
                     key={index}
-                    className="w-4 h-4 rounded-full border border-gray-300"
+                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform cursor-pointer"
                     style={{ backgroundColor: color.hexCode }}
                     title={color.name}
                   />
                 ))}
                 {product.colors.length > 5 && (
-                  <span className="text-xs text-gray-500">+{product.colors.length - 5}</span>
+                  <span className="text-xs text-gray-500 font-medium">+{product.colors.length - 5}</span>
                 )}
               </div>
             )}

@@ -45,13 +45,6 @@ const ProductForm = () => {
 
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    fetchCategories();
-    if (isEdit) {
-      fetchProduct();
-    }
-  }, [id, isEdit, fetchCategories, fetchProduct]);
-
   const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll();
@@ -101,6 +94,13 @@ const ProductForm = () => {
       setLoading(false);
     }
   }, [id, navigate]);
+
+  useEffect(() => {
+    fetchCategories();
+    if (isEdit) {
+      fetchProduct();
+    }
+  }, [isEdit, fetchCategories, fetchProduct]);
 
   const validateForm = () => {
     const newErrors = {};

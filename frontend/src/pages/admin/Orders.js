@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
-  HiOutlineSearch, HiOutlineEye, HiOutlineTruck, HiOutlineCheck,
-  HiOutlineX, HiOutlineFilter
+  HiOutlineSearch, HiOutlineEye, HiOutlineTruck, HiOutlineDownload
 } from 'react-icons/hi';
 import { orderAPI, getImageUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Orders = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({});
@@ -49,7 +50,7 @@ const Orders = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      await orderAPI.updateStatus(orderId, { orderStatus: newStatus });
+      await orderAPI.updateStatus(orderId, { status: newStatus });
       toast.success('Order status updated');
       setStatusModal({ open: false, order: null });
       fetchOrders();
@@ -86,6 +87,165 @@ const Orders = () => {
       cancelled: 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const generateOrderPDF = (order) => {
+    const doc = new jsPDF();
+    
+    // Company Header with Logo Style
+    doc.setFillColor(139, 69, 19); // Brown/Gold color
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('MERAAB & EMAAN', 105, 22, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Premium Pakistani Fashion', 105, 32, { align: 'center' });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Invoice Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', 15, 55);
+    
+    // Order Info Box (Right Side)
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(120, 45, 75, 35, 3, 3, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Order #: ${order.orderNumber}`, 125, 54);
+    doc.text(`Date: ${formatDate(order.createdAt)}`, 125, 62);
+    doc.text(`Status: ${order.orderStatus?.toUpperCase()}`, 125, 70);
+    doc.text(`Payment: ${order.paymentMethod === 'cod' ? 'COD' : order.isPaid ? 'Paid' : 'Pending'}`, 125, 78);
+    
+    // Divider Line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, 88, 195, 88);
+    
+    // Customer Details (Left)
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(139, 69, 19);
+    doc.text('BILL TO', 15, 98);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const customerName = order.user?.firstName 
+      ? `${order.user.firstName} ${order.user.lastName || ''}`
+      : `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`;
+    const customerEmail = order.user?.email || order.shippingAddress?.email || order.guestEmail || 'N/A';
+    const customerPhone = order.shippingAddress?.phone || 'N/A';
+    
+    doc.text(customerName + (order.isGuestOrder ? ' (Guest)' : ''), 15, 106);
+    doc.text(customerEmail, 15, 113);
+    doc.text(`Phone: ${customerPhone}`, 15, 120);
+    
+    // Shipping Address (Right)
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(139, 69, 19);
+    doc.text('SHIP TO', 110, 98);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const addr = order.shippingAddress;
+    doc.text(`${addr?.firstName || ''} ${addr?.lastName || ''}`, 110, 106);
+    doc.text(`${addr?.street || addr?.addressLine1 || ''}`, 110, 113);
+    doc.text(`${addr?.city || ''}, ${addr?.state || ''}`, 110, 120);
+    doc.text(`${addr?.postalCode || ''}, ${addr?.country || 'Pakistan'}`, 110, 127);
+    
+    // Order Items Table
+    const tableData = order.items?.map(item => [
+      item.name || item.product?.name || item.productName || 'Product',
+      item.selectedColor?.name || item.color || '-',
+      item.selectedSize || item.size || '-',
+      item.quantity || 1,
+      `Rs ${(item.price || 0).toLocaleString()}`,
+      `Rs ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}`
+    ]) || [];
+    
+    autoTable(doc, {
+      startY: 138,
+      head: [['Product Name', 'Color', 'Size', 'Qty', 'Unit Price', 'Total']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [139, 69, 19],
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      styles: { 
+        fontSize: 9,
+        cellPadding: 4
+      },
+      columnStyles: {
+        0: { cellWidth: 50, halign: 'left' },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 15, halign: 'center' },
+        4: { cellWidth: 32, halign: 'right' },
+        5: { cellWidth: 32, halign: 'right' }
+      },
+      alternateRowStyles: {
+        fillColor: [250, 250, 250]
+      }
+    });
+    
+    // Order Summary Box
+    const finalY = (doc.lastAutoTable?.finalY || 180) + 10;
+    
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(120, finalY - 5, 75, 55, 3, 3, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    const subtotal = order.subtotal || 0;
+    const shipping = order.shippingCost || 0;
+    const discount = order.discount || 0;
+    const total = order.totalAmount || order.grandTotal || 0;
+    
+    doc.text('Subtotal:', 125, finalY + 5);
+    doc.text(`Rs ${subtotal.toLocaleString()}`, 190, finalY + 5, { align: 'right' });
+    
+    doc.text('Shipping:', 125, finalY + 15);
+    doc.text(`Rs ${shipping.toLocaleString()}`, 190, finalY + 15, { align: 'right' });
+    
+    if (discount > 0) {
+      doc.setTextColor(0, 128, 0);
+      doc.text('Discount:', 125, finalY + 25);
+      doc.text(`-Rs ${discount.toLocaleString()}`, 190, finalY + 25, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+    }
+    
+    doc.setDrawColor(139, 69, 19);
+    doc.line(125, finalY + (discount > 0 ? 30 : 20), 190, finalY + (discount > 0 ? 30 : 20));
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(139, 69, 19);
+    const totalY = finalY + (discount > 0 ? 40 : 30);
+    doc.text('TOTAL:', 125, totalY);
+    doc.text(`Rs ${total.toLocaleString()}`, 190, totalY, { align: 'right' });
+    
+    // Footer
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(128, 128, 128);
+    doc.text('Thank you for shopping with Meraab & Emaan!', 105, 270, { align: 'center' });
+    doc.text('Questions? Contact us at support@meraabemaan.com | +92-XXX-XXXXXXX', 105, 277, { align: 'center' });
+    doc.text('www.meraabemaan.com', 105, 284, { align: 'center' });
+    
+    // Save PDF
+    doc.save(`Invoice-${order.orderNumber}.pdf`);
+    toast.success('Invoice downloaded successfully!');
   };
 
   const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -183,7 +343,7 @@ const Orders = () => {
                         {order.items?.length} item{order.items?.length !== 1 ? 's' : ''}
                       </td>
                       <td className="py-3 px-4 font-medium">
-                        {formatPrice(order.grandTotal)}
+                        {formatPrice(order.grandTotal || order.totalAmount || 0)}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`
@@ -203,12 +363,21 @@ const Orders = () => {
                           <button
                             onClick={() => setSelectedOrder(order)}
                             className="p-2 text-gray-400 hover:text-primary-600"
+                            title="View Details"
                           >
                             <HiOutlineEye className="w-5 h-5" />
                           </button>
                           <button
+                            onClick={() => generateOrderPDF(order)}
+                            className="p-2 text-gray-400 hover:text-green-600"
+                            title="Download PDF"
+                          >
+                            <HiOutlineDownload className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => setStatusModal({ open: true, order })}
                             className="p-2 text-gray-400 hover:text-primary-600"
+                            title="Update Status"
                           >
                             <HiOutlineTruck className="w-5 h-5" />
                           </button>
@@ -272,17 +441,30 @@ const Orders = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-medium mb-2">Customer</h4>
-                <p>{selectedOrder.user?.firstName} {selectedOrder.user?.lastName}</p>
-                <p className="text-sm text-gray-500">{selectedOrder.user?.email}</p>
+                <p>
+                  {selectedOrder.user?.firstName 
+                    ? `${selectedOrder.user.firstName} ${selectedOrder.user.lastName || ''}` 
+                    : `${selectedOrder.shippingAddress?.firstName || ''} ${selectedOrder.shippingAddress?.lastName || ''}`}
+                  {selectedOrder.isGuestOrder && <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Guest</span>}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.user?.email || selectedOrder.shippingAddress?.email || selectedOrder.guestEmail || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.shippingAddress?.phone || selectedOrder.user?.phone || 'N/A'}
+                </p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Shipping Address</h4>
-                <p>{selectedOrder.shippingAddress?.fullName}</p>
+                <p>{selectedOrder.shippingAddress?.firstName} {selectedOrder.shippingAddress?.lastName}</p>
                 <p className="text-sm text-gray-500">
-                  {selectedOrder.shippingAddress?.addressLine1}
+                  {selectedOrder.shippingAddress?.street || selectedOrder.shippingAddress?.addressLine1}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state}
+                  {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.postalCode}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.shippingAddress?.country || 'Pakistan'}
                 </p>
               </div>
             </div>
@@ -295,18 +477,22 @@ const Orders = () => {
                   <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                     <div className="w-12 h-14 bg-gray-200 rounded overflow-hidden">
                       <img
-                        src={getImageUrl(item.product?.images?.[0]?.url)}
-                        alt={item.product?.name}
+                        src={getImageUrl(item.image || item.product?.images?.[0]?.url)}
+                        alt={item.name || item.product?.name || 'Product'}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/placeholder-product.png';
+                        }}
                       />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{item.product?.name}</p>
+                      <p className="font-medium text-sm">{item.name || item.product?.name || 'Product'}</p>
                       <p className="text-xs text-gray-500">
-                        {item.selectedSize} / Qty: {item.quantity}
+                        {item.selectedSize || item.size || 'N/A'} / Qty: {item.quantity}
                       </p>
                     </div>
-                    <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                    <p className="font-medium">{formatPrice((item.price || 0) * (item.quantity || 1))}</p>
                   </div>
                 ))}
               </div>
@@ -316,22 +502,33 @@ const Orders = () => {
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-500">Subtotal</span>
-                <span>{formatPrice(selectedOrder.subtotal)}</span>
+                <span>{formatPrice(selectedOrder.subtotal || selectedOrder.itemsTotal || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Shipping</span>
-                <span>{formatPrice(selectedOrder.shippingCost)}</span>
+                <span>{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingPrice || 0)}</span>
               </div>
-              {selectedOrder.discount > 0 && (
+              {(selectedOrder.discount > 0 || selectedOrder.discountAmount > 0) && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>-{formatPrice(selectedOrder.discount)}</span>
+                  <span>-{formatPrice(selectedOrder.discount || selectedOrder.discountAmount || 0)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
-                <span>{formatPrice(selectedOrder.grandTotal)}</span>
+                <span>{formatPrice(selectedOrder.grandTotal || selectedOrder.totalAmount || 0)}</span>
               </div>
+            </div>
+
+            {/* Download PDF Button */}
+            <div className="border-t pt-4">
+              <button
+                onClick={() => generateOrderPDF(selectedOrder)}
+                className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg transition-colors"
+              >
+                <HiOutlineDownload className="w-5 h-5" />
+                Download Invoice PDF
+              </button>
             </div>
           </div>
         )}
