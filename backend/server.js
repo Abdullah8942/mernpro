@@ -29,6 +29,9 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',
+    'https://ecom.jkdryfruits.shop',
+    'https://www.ecom.jkdryfruits.shop',
+    'http://ecom.jkdryfruits.shop',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true
