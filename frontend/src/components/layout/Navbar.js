@@ -31,22 +31,23 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl shadow-sm border-b border-white/20 transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-white shadow-md border-b border-gray-100 transition-all duration-300">
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-primary-900/95 via-primary-800/95 to-primary-900/95 backdrop-blur-sm text-white text-center py-2.5 text-sm">
-        <p className="animate-pulse">✨ Free Shipping on Orders Over PKR 5,000 | Use Code: <span className="font-bold">MERAAB10</span> for 10% Off ✨</p>
+      <div className="bg-gradient-to-r from-secondary-900 via-secondary-800 to-secondary-900 text-gold-300 text-center py-2 text-xs sm:text-sm tracking-wide">
+        <p className="font-light">✨ Free Shipping on Orders Over PKR 5,000 | Use Code: <span className="font-semibold text-gold-400">MERAAB10</span> for 10% Off ✨</p>
       </div>
 
-      <nav className="container-custom bg-transparent">
-        <div className="flex items-center justify-between py-4">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between py-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <h1 className="text-2xl md:text-3xl font-display font-bold">
-              <span className="text-primary-700 group-hover:text-primary-600 transition-colors">Meraab</span>
-              <span className="text-gold-500 group-hover:text-gold-600 transition-colors"> & </span>
-              <span className="text-primary-700 group-hover:text-primary-600 transition-colors">Emaan</span>
-            </h1>
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="Meraab & Emaan" 
+              className="h-14 md:h-16 w-auto object-contain"
+            />
           </Link>
+
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6">

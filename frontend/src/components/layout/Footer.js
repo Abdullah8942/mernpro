@@ -29,18 +29,18 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-gradient-to-b from-secondary-800 to-secondary-900 text-white">
+    <footer className="bg-gradient-to-b from-secondary-900 via-secondary-950 to-black text-white">
       {/* Newsletter Section */}
-      <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-gold-400 rounded-full filter blur-3xl"></div>
+      <div className="bg-gradient-to-r from-secondary-900 via-secondary-800 to-secondary-900 relative overflow-hidden border-b border-gold-500/20">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-gold-400 rounded-full filter blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-gold-500 rounded-full filter blur-3xl"></div>
         </div>
-        <div className="container-custom py-12 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="container-custom py-14 relative z-10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
-              <h3 className="text-2xl font-display font-semibold">Join Our Fashion Family</h3>
-              <p className="text-primary-100 mt-1">Be the first to know about new arrivals & exclusive offers</p>
+              <h3 className="text-2xl md:text-3xl font-display font-semibold text-white">Join Our Fashion Family</h3>
+              <p className="text-gold-300/80 mt-2 font-light">Be the first to know about new arrivals & exclusive offers</p>
             </div>
             <form className="flex w-full md:w-auto" onSubmit={handleSubscribe}>
               <input
@@ -48,12 +48,12 @@ const Footer = () => {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="px-5 py-3.5 w-full md:w-80 rounded-l-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-gold-400 transition-all"
+                className="px-6 py-4 w-full md:w-80 rounded-l-full text-gray-800 bg-white/95 focus:outline-none focus:ring-2 focus:ring-gold-400 transition-all placeholder-gray-500"
               />
               <button 
                 type="submit" 
                 disabled={subscribing}
-                className="bg-gold-500 hover:bg-gold-600 px-8 py-3.5 rounded-r-full font-semibold transition-all hover:shadow-lg hover:shadow-gold-500/30 btn-ripple disabled:opacity-50"
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 px-8 py-4 rounded-r-full font-semibold transition-all hover:shadow-lg hover:shadow-gold-500/30 text-secondary-900 disabled:opacity-50"
               >
                 {subscribing ? '...' : 'Subscribe'}
               </button>
@@ -67,10 +67,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand Info */}
           <div>
-            <h2 className="text-2xl font-display font-bold mb-4">
-              Meraab <span className="text-gold-400">&</span> Emaan
-            </h2>
-            <p className="text-gray-400 mb-6">
+            <Link to="/" className="inline-block mb-4">
+              <img 
+                src="/logo.png" 
+                alt="Meraab & Emaan" 
+                className="h-14 w-auto object-contain filter brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </Link>
+            <p className="text-gray-400 mb-6 leading-relaxed">
               Elevating Pakistani fashion with exquisite craftsmanship and timeless elegance. 
               From bridal wear to casual chic, we bring your fashion dreams to life.
             </p>
@@ -190,11 +194,11 @@ const Footer = () => {
                 Terms & Conditions
               </Link>
             </div>
-            <div className="flex items-center space-x-3">
-              <img src="/images/payment/visa.svg" alt="Visa" className="h-6" />
-              <img src="/images/payment/mastercard.svg" alt="Mastercard" className="h-6" />
-              <img src="/images/payment/jazzcash.svg" alt="JazzCash" className="h-6" />
-              <img src="/images/payment/easypaisa.svg" alt="EasyPaisa" className="h-6" />
+            <div className="flex items-center space-x-4">
+              <img src="/images/payment/visa.svg" alt="Visa" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <img src="/images/payment/mastercard.svg" alt="Mastercard" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <img src="/images/payment/jazzcash.svg" alt="JazzCash" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <img src="/images/payment/easypaisa.svg" alt="EasyPaisa" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
