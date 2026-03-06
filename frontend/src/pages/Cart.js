@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineTrash, HiMinus, HiPlus, HiOutlineShoppingBag, HiOutlineArrowLeft } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
@@ -7,7 +7,9 @@ import { getImageUrl } from '../services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, loading, updateCartItem, removeFromCart } = useCart();
+  const { cart, loading, updateCartItem, removeFromCart, applyCoupon, removeCoupon } = useCart();
+  const [couponCode, setCouponCode] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-PK', {
@@ -209,14 +211,42 @@ const Cart = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coupon Code
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code"
-                    className="input flex-1"
-                  />
-                  <button className="btn-outline px-4">Apply</button>
-                </div>
+                {cart.couponCode ? (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <span className="text-sm text-green-700 font-medium">{cart.couponCode} applied</span>
+                    <button
+                      onClick={async () => {
+                        await removeCoupon();
+                        setCouponCode('');
+                      }}
+                      className="text-red-500 text-sm hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="input flex-1"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!couponCode.trim()) return;
+                        setApplyingCoupon(true);
+                        await applyCoupon(couponCode.trim());
+                        setApplyingCoupon(false);
+                      }}
+                      disabled={applyingCoupon || !couponCode.trim()}
+                      className="btn-outline px-4 disabled:opacity-50"
+                    >
+                      {applyingCoupon ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Checkout Button */}

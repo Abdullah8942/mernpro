@@ -133,16 +133,10 @@ const Footer = () => {
                 <Link to="/track-order" className="text-gray-400 hover:text-white transition-colors">Track Order</Link>
               </li>
               <li>
-                <Link to="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Policy</Link>
+                <Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link>
               </li>
               <li>
-                <Link to="/returns" className="text-gray-400 hover:text-white transition-colors">Returns & Exchanges</Link>
-              </li>
-              <li>
-                <Link to="/faq" className="text-gray-400 hover:text-white transition-colors">FAQs</Link>
-              </li>
-              <li>
-                <Link to="/size-guide" className="text-gray-400 hover:text-white transition-colors">Size Guide</Link>
+                <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
               </li>
             </ul>
           </div>

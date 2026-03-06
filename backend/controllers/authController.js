@@ -306,16 +306,11 @@ const deleteAddress = async (req, res) => {
 // @access  Private
 const addToWishlist = async (req, res) => {
   try {
-    console.log('=== ADD TO WISHLIST ===');
-    console.log('User ID:', req.user._id);
-    console.log('Product ID:', req.params.productId);
-    
     const productId = req.params.productId;
     
     // Validate that productId is a valid ObjectId
     const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      console.log('Invalid product ID format');
       return res.status(400).json({
         success: false,
         message: 'Invalid product ID'
@@ -326,7 +321,6 @@ const addToWishlist = async (req, res) => {
     const Product = require('../models/Product');
     const productExists = await Product.findById(productId);
     if (!productExists) {
-      console.log('Product not found');
       return res.status(404).json({
         success: false,
         message: 'Product not found'
@@ -355,8 +349,6 @@ const addToWishlist = async (req, res) => {
 
     user.wishlist.push(productId);
     await user.save();
-
-    console.log('Wishlist updated successfully:', user.wishlist.length, 'items');
 
     res.json({
       success: true,

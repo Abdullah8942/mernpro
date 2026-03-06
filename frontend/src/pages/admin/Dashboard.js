@@ -36,7 +36,7 @@ const Dashboard = () => {
 
       // Calculate stats from response
       const orders = ordersRes.data.data || [];
-      const totalRevenue = orders.reduce((sum, order) => sum + (order.grandTotal || 0), 0);
+      const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
       setStats({
         totalRevenue: totalRevenue,
@@ -260,7 +260,7 @@ const Dashboard = () => {
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
                         {order.orderStatus}
                       </span>
-                      <p className="font-bold text-gray-800 mt-1">{formatPrice(order.grandTotal)}</p>
+                      <p className="font-bold text-gray-800 mt-1">{formatPrice(order.totalAmount)}</p>
                     </div>
                   </div>
                 ))}

@@ -2,7 +2,7 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
-const { sendOrderNotification, sendOrderConfirmation } = require('../utils/emailService');
+const { sendOrderNotification, sendOrderConfirmation, sendOrderStatusUpdate } = require('../utils/emailService');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -418,6 +418,14 @@ const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Send status update email to customer (non-blocking)
+    const customerEmail = order.shippingAddress?.email || order.guestEmail;
+    if (customerEmail) {
+      sendOrderStatusUpdate(order, customerEmail).catch((err) => {
+        console.error('Failed to send order status email:', err.message);
+      });
+    }
 
     res.json({
       success: true,

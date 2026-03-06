@@ -146,21 +146,16 @@ const getProductBySlug = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
   try {
-    console.log('=== GET PRODUCT BY ID ===');
-    console.log('Product ID:', req.params.id);
-    
     const product = await Product.findById(req.params.id)
       .populate('category', 'name slug');
 
     if (!product) {
-      console.log('Product not found');
       return res.status(404).json({
         success: false,
         message: 'Product not found'
       });
     }
 
-    console.log('Product found:', product.name);
     res.json({
       success: true,
       data: product
@@ -180,10 +175,6 @@ const getProductById = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
   try {
-    console.log('=== CREATE PRODUCT ===');
-    console.log('Body keys:', Object.keys(req.body));
-    console.log('Files:', req.files ? req.files.length : 0);
-    
     // Parse JSON fields from FormData (multer parses form fields as strings)
     let sizeVariations = [];
     let colors = [];
@@ -196,7 +187,6 @@ const createProduct = async (req, res) => {
       try {
         return JSON.parse(value);
       } catch (e) {
-        console.log('JSON parse error:', e.message);
         return defaultValue;
       }
     };
@@ -213,7 +203,6 @@ const createProduct = async (req, res) => {
         alt: req.body.name || 'Product image',
         isPrimary: index === 0
       }));
-      console.log('Uploaded images:', images.length);
     }
 
     // Handle existing image URLs (for edit mode or external URLs)
@@ -292,11 +281,7 @@ const createProduct = async (req, res) => {
       totalStock
     };
 
-    console.log('Creating product:', name);
-
     const product = await Product.create(productData);
-
-    console.log('Product created successfully:', product._id);
 
     // Populate category before returning
     const populatedProduct = await Product.findById(product._id).populate('category', 'name slug');
@@ -342,9 +327,6 @@ const createProduct = async (req, res) => {
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
   try {
-    console.log('=== UPDATE PRODUCT ===');
-    console.log('Product ID:', req.params.id);
-    
     let product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
@@ -392,7 +374,6 @@ const updateProduct = async (req, res) => {
         isPrimary: images.length === 0 // First image is primary if no existing
       }));
       images = [...images, ...newImages];
-      console.log('Added', req.files.length, 'new images');
     }
 
     // Ensure at least one image has isPrimary
@@ -431,8 +412,6 @@ const updateProduct = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('category', 'name slug');
-
-    console.log('Product updated successfully');
 
     res.json({
       success: true,

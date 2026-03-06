@@ -21,6 +21,8 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import OrderHistory from './pages/OrderHistory';
+import OrderDetails from './pages/OrderDetails';
+import TrackOrder from './pages/TrackOrder';
 import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
@@ -103,6 +105,12 @@ function AppContent() {
               <OrderHistory />
             </ProtectedRoute>
           } />
+          <Route path="orders/:id" element={
+            <ProtectedRoute>
+              <OrderDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="track-order" element={<TrackOrder />} />
         </Route>
 
         {/* Auth Routes (No Layout) */}

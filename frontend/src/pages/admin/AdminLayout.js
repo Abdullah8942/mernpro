@@ -1,19 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HiOutlineHome, HiOutlineShoppingBag, HiOutlineCollection, HiOutlineClipboardList,
   HiOutlineUsers, HiOutlineChartBar, HiOutlineCog, HiOutlineMenu, HiOutlineX,
-  HiOutlineBell, HiOutlineLogout, HiOutlineSearch, HiOutlineMoon, HiOutlineSun,
+  HiOutlineBell, HiOutlineLogout, HiOutlineSearch,
   HiOutlineChevronDown
 } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
+import { orderAPI } from '../../services/api';
 
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchPendingOrders = useCallback(async () => {
+    try {
+      const response = await orderAPI.getAllAdmin({ status: 'pending', limit: 1 });
+      setPendingCount(response.data.pagination?.total || 0);
+    } catch (err) {
+      // silently fail
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPendingOrders();
+    const interval = setInterval(fetchPendingOrders, 60000); // refresh every 60s
+    return () => clearInterval(interval);
+  }, [fetchPendingOrders]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return;
+    if (q.includes('order')) navigate('/admin/orders');
+    else if (q.includes('product')) navigate('/admin/products');
+    else if (q.includes('user') || q.includes('customer')) navigate('/admin/users');
+    else if (q.includes('categor')) navigate('/admin/categories');
+    else if (q.includes('analytic') || q.includes('stat')) navigate('/admin/analytics');
+    else if (q.includes('setting')) navigate('/admin/settings');
+    else navigate('/admin/orders');
+    setSearchQuery('');
+  };
 
   const menuItems = [
     { path: '/admin', label: 'Dashboard', icon: HiOutlineHome, exact: true },
@@ -150,34 +181,31 @@ const AdminLayout = () => {
               </button>
               
               {/* Search Bar */}
-              <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5 w-80">
+              <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5 w-80">
                 <HiOutlineSearch className="w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search anything..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search orders, products, users..."
                   className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder-gray-400"
                 />
-                <kbd className="hidden sm:inline-block px-2 py-1 text-xs bg-white rounded-md text-gray-400 shadow-sm">
-                  ⌘K
-                </kbd>
-              </div>
+              </form>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Theme Toggle */}
-              <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors"
-              >
-                {darkMode ? <HiOutlineSun className="w-5 h-5" /> : <HiOutlineMoon className="w-5 h-5" />}
-              </button>
-
               {/* Notifications */}
-              <button className="relative w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors">
+              <button 
+                onClick={() => navigate('/admin/orders')}
+                className="relative w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors"
+                title="Pending orders"
+              >
                 <HiOutlineBell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                  3
-                </span>
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {pendingCount > 9 ? '9+' : pendingCount}
+                  </span>
+                )}
               </button>
 
               {/* View Store Link */}
@@ -205,7 +233,7 @@ const AdminLayout = () => {
         {/* Footer */}
         <footer className="px-6 py-4 border-t border-gray-200 bg-white/50">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-500">
-            <p>© 2025 Meraab & Emaan. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Meraab &amp; Emaan. All rights reserved.</p>
             <p>Made with ❤️ for fashion</p>
           </div>
         </footer>

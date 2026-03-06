@@ -6,6 +6,8 @@ const path = require('path');
 
 // Load environment variables
 dotenv.config();
+// Also load from parent directory .env for Vercel
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -23,21 +25,59 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// MongoDB connection caching for serverless environments
+let cachedConnection = null;
+
+const connectDB = async () => {
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+  try {
+    cachedConnection = await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ MongoDB Connected Successfully');
+    return cachedConnection;
+  } catch (err) {
+    console.error('❌ MongoDB Connection Error:', err.message);
+    cachedConnection = null;
+    throw err;
+  }
+};
+
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'https://ecom.jkdryfruits.shop',
-    'https://www.ecom.jkdryfruits.shop',
-    'http://ecom.jkdryfruits.shop',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'https://ecom.jkdryfruits.shop',
+      'https://www.ecom.jkdryfruits.shop',
+      'http://ecom.jkdryfruits.shop',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Also allow any .vercel.app domain
+    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins in production for now
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Database connection middleware - ensures DB is connected before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -69,8 +109,7 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       cart: '/api/cart',
       orders: '/api/orders'
-    },
-    frontend: 'http://localhost:3000'
+    }
   });
 });
 
@@ -78,18 +117,19 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// Connect to MongoDB and start server
-const PORT = process.env.PORT || 5000;
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB Connected Successfully');
+// Only start server when not on Vercel (local development)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📦 Meraab & Emaan E-Commerce API`);
     });
-  })
-  .catch((err) => {
+  }).catch((err) => {
     console.error('❌ MongoDB Connection Error:', err.message);
     process.exit(1);
   });
+}
+
+// Export for Vercel serverless
+module.exports = app;
