@@ -25,12 +25,24 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Validate critical environment variables
+if (!process.env.MONGO_URI) {
+  console.error('❌ FATAL: MONGO_URI environment variable is not set!');
+  if (!process.env.VERCEL) process.exit(1);
+}
+if (!process.env.JWT_SECRET) {
+  console.error('❌ WARNING: JWT_SECRET environment variable is not set!');
+}
+
 // MongoDB connection caching for serverless environments
 let cachedConnection = null;
 
 const connectDB = async () => {
   if (cachedConnection && mongoose.connection.readyState === 1) {
     return cachedConnection;
+  }
+  if (!process.env.MONGO_URI) {
+    throw new Error('MONGO_URI environment variable is not configured');
   }
   try {
     cachedConnection = await mongoose.connect(process.env.MONGO_URI);
@@ -70,13 +82,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection middleware - ensures DB is connected before handling requests
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    res.status(500).json({ message: 'Database connection failed' });
-  }
+app.use((req, res, next) => {
+  connectDB()
+    .then(() => next())
+    .catch((err) => {
+      console.error('DB connection middleware error:', err.message);
+      res.status(500).json({ 
+        success: false,
+        message: 'Database connection failed',
+        error: process.env.NODE_ENV === 'production' ? undefined : err.message
+      });
+    });
 });
 
 // Static files for uploads

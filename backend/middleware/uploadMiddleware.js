@@ -2,16 +2,28 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('Created uploads directory:', uploadsDir);
+// Use /tmp on Vercel (read-only filesystem), otherwise use local uploads dir
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true' || !!process.env.VERCEL;
+const uploadsDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '..', 'uploads');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory:', uploadsDir);
+  }
+} catch (err) {
+  console.warn('Warning: Could not create uploads directory:', err.message);
 }
 
 // Storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
+    // Ensure dir exists at request time too (for /tmp which can be cleared)
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+    } catch (e) { /* ignore */ }
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
