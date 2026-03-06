@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -205,7 +205,7 @@ const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess, cart, 
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, loading: cartLoading, cartTotal } = useCart();
+  const { cart, loading: cartLoading } = useCart();
   const { user, isAuthenticated } = useAuth();
 
   const [step, setStep] = useState(1);

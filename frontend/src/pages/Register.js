@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff, HiOutlinePhone } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
 
 const Register = () => {
   const navigate = useNavigate();

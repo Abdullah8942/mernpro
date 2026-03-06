@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch,
-  HiOutlineFilter, HiOutlineEye, HiOutlinePhotograph, HiOutlineEyeOff
+  HiOutlineEye, HiOutlinePhotograph, HiOutlineEyeOff
 } from 'react-icons/hi';
 import { productAPI, categoryAPI, getImageUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
@@ -10,7 +10,6 @@ import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
 
 const Products = () => {
-  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
