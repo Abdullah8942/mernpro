@@ -62,6 +62,8 @@ app.use(cors({
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
+      'https://mernproo.vercel.app',
+      'https://mernpro.onrender.com',
       'https://ecom.jkdryfruits.shop',
       'https://www.ecom.jkdryfruits.shop',
       'http://ecom.jkdryfruits.shop',
