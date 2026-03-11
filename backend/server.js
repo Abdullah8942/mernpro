@@ -135,7 +135,8 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(frontendBuild));
 
   // Any route not matched by API routes serves the React app
-  app.get('*', (req, res) => {
+  // Express 5 requires named splat parameter syntax: {*name}
+  app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(frontendBuild, 'index.html'));
   });
 } else {
