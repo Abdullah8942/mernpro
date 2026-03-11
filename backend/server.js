@@ -129,11 +129,23 @@ app.get('/', (req, res) => {
   });
 });
 
-// Error Middleware
-app.use(notFound);
-app.use(errorHandler);
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
+  app.use(express.static(frontendBuild));
 
-// Only start server when not on Vercel (local development)
+  // Any route not matched by API routes serves the React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuild, 'index.html'));
+  });
+} else {
+  // Error Middleware (only in dev, production uses the catch-all above)
+  app.use(notFound);
+  app.use(errorHandler);
+}
+
+// Start server (works on Render, Railway, local, etc.)
+// On Vercel, the serverless export is used instead
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
   connectDB().then(() => {
