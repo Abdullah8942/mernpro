@@ -5,14 +5,15 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER || 'workwithabdullah8942@gmail.com',
+      user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS // App password from Gmail
     }
   });
 };
 
 // Store owner email
-const STORE_OWNER_EMAIL = 'workwithabdullah8942@gmail.com';
+const STORE_OWNER_EMAIL = process.env.STORE_OWNER_EMAIL || process.env.EMAIL_USER;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Send order notification to store owner
 const sendOrderNotification = async (order) => {
@@ -222,7 +223,7 @@ const sendNewsletterSubscription = async (subscriberEmail) => {
               <li>💃 Fashion Tips & Styling Ideas</li>
               <li>🎁 Special Promotions</li>
             </ul>
-            <a href="http://localhost:3000/shop" style="display: inline-block; background: #8B4513; color: #fff; padding: 15px 40px; border-radius: 30px; text-decoration: none; margin-top: 20px; font-weight: bold;">Shop Now</a>
+            <a href="${FRONTEND_URL}/shop" style="display: inline-block; background: #8B4513; color: #fff; padding: 15px 40px; border-radius: 30px; text-decoration: none; margin-top: 20px; font-weight: bold;">Shop Now</a>
           </div>
           <div style="background: #f8f9fa; padding: 20px; text-align: center;">
             <p style="color: #999; font-size: 12px; margin: 0;">© 2025 Meraab & Emaan. All rights reserved.</p>
@@ -244,9 +245,37 @@ const sendNewsletterSubscription = async (subscriberEmail) => {
   }
 };
 
+// Send order status update to customer
+const sendOrderStatusUpdate = async (order, customerEmail) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: `"Meraab & Emaan" <${process.env.EMAIL_USER || 'noreply@meraabemaan.com'}>`,
+      to: customerEmail,
+      subject: `Order Update - #${order.orderNumber}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #8B4513;">Order Status Updated</h2>
+          <p>Your order <strong>#${order.orderNumber}</strong> is now <strong>${order.orderStatus}</strong>.</p>
+          <p>You can track your order anytime from your account.</p>
+          <a href="${FRONTEND_URL}/orders/${order._id}" style="display: inline-block; margin-top: 12px; background: #8B4513; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 6px;">View Order</a>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Failed to send order status update email:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendOrderNotification,
   sendOrderConfirmation,
   sendNewsletterSubscription,
+  sendOrderStatusUpdate,
   STORE_OWNER_EMAIL
 };

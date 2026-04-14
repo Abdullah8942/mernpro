@@ -3,6 +3,11 @@ node_modules/
 
 # Environment
 .env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # Backend uploads
 backend/uploads/

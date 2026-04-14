@@ -194,7 +194,7 @@ const CheckoutForm = ({ shippingAddress, paymentMethod, total, onSuccess, cart, 
 
       <button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={(paymentMethod === 'card' && !stripe) || processing}
         className="w-full btn-primary py-3 disabled:opacity-50"
       >
         {processing ? 'Processing...' : paymentMethod === 'cod' ? 'Place Order' : 'Pay Now'}
@@ -344,7 +344,7 @@ const Checkout = () => {
   }
 
   const subtotal = cart?.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-  const shipping = subtotal > 5000 ? 0 : 250;
+  const shipping = subtotal >= 5000 ? 0 : 200;
   const total = subtotal + shipping;
 
   return (

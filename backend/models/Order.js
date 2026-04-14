@@ -142,6 +142,10 @@ const orderSchema = new mongoose.Schema({
   timestamps: true
 });
 
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ orderStatus: 1, createdAt: -1 });
+orderSchema.index({ isPaid: 1, createdAt: -1 });
+
 // Generate order number before saving
 orderSchema.pre('save', async function() {
   if (!this.orderNumber) {

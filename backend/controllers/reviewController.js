@@ -74,7 +74,7 @@ const getProductReviews = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reviews',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -138,7 +138,7 @@ const createReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -186,7 +186,7 @@ const updateReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -226,7 +226,7 @@ const deleteReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -270,7 +270,7 @@ const likeReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -320,7 +320,7 @@ const getAllReviews = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reviews',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -356,7 +356,7 @@ const approveReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -394,7 +394,7 @@ const replyToReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to reply to review',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -409,3 +409,5 @@ module.exports = {
   approveReview,
   replyToReview
 };
+
+

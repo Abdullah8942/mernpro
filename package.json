@@ -8,8 +8,9 @@
     "install:all": "npm run install:backend && npm run install:frontend",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
+    "preflight": "node backend/scripts/preflight.js",
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
-    "start": "node backend/server.js"
+    "start": "npm run preflight && node backend/server.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

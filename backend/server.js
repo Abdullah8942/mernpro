@@ -3,6 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
+const hpp = require('hpp');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+const { validateEnvironment } = require('./config/envValidation');
 
 // Load environment variables
 dotenv.config();
@@ -26,12 +32,21 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const app = express();
 
 // Validate critical environment variables
-if (!process.env.MONGO_URI) {
-  console.error('❌ FATAL: MONGO_URI environment variable is not set!');
-  if (!process.env.VERCEL) process.exit(1);
-}
-if (!process.env.JWT_SECRET) {
-  console.error('❌ WARNING: JWT_SECRET environment variable is not set!');
+const envCheck = validateEnvironment({
+  isProduction: process.env.NODE_ENV === 'production'
+});
+
+if (!envCheck.ok) {
+  if (envCheck.missing.length > 0) {
+    console.error(`❌ Missing required env vars: ${envCheck.missing.join(', ')}`);
+  }
+  if (envCheck.invalid.length > 0) {
+    console.error(`❌ Invalid placeholder env vars: ${envCheck.invalid.join(', ')}`);
+  }
+
+  if (!process.env.VERCEL) {
+    process.exit(1);
+  }
 }
 
 // MongoDB connection caching for serverless environments
@@ -55,7 +70,7 @@ const connectDB = async () => {
   }
 };
 
-// Middleware
+// Security and middleware
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -75,27 +90,42 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all origins in production for now
+      callback(null, false);
     }
   },
   credentials: true
 }));
+
+app.use(helmet());
+app.use(compression());
+app.use(hpp());
+app.use(mongoSanitize());
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false
+}));
+
+// Stripe webhook requires raw body for signature verification.
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection middleware - ensures DB is connected before handling requests
-app.use((req, res, next) => {
-  connectDB()
-    .then(() => next())
-    .catch((err) => {
-      console.error('DB connection middleware error:', err.message);
-      res.status(500).json({ 
-        success: false,
-        message: 'Database connection failed',
-        error: process.env.NODE_ENV === 'production' ? undefined : err.message
+// Vercel serverless functions require lazy DB connection per invocation.
+if (process.env.VERCEL) {
+  app.use((req, res, next) => {
+    connectDB()
+      .then(() => next())
+      .catch((err) => {
+        console.error('DB connection middleware error:', err.message);
+        res.status(500).json({
+          success: false,
+          message: 'Database connection failed'
+        });
       });
-    });
-});
+  });
+}
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -110,6 +140,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+
+// API 404 handler should return JSON even in production.
+app.use('/api', notFound);
+app.use(errorHandler);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -141,10 +175,6 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(frontendBuild, 'index.html'));
   });
-} else {
-  // Error Middleware (only in dev, production uses the catch-all above)
-  app.use(notFound);
-  app.use(errorHandler);
 }
 
 // Start server (works on Render, Railway, local, etc.)

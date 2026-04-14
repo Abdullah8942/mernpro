@@ -24,7 +24,7 @@ const getCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch cart',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -122,7 +122,7 @@ const addToCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to add item to cart',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -186,7 +186,7 @@ const updateCartItem = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update cart',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -225,7 +225,7 @@ const removeFromCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to remove item from cart',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -259,7 +259,7 @@ const clearCart = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to clear cart',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -344,7 +344,7 @@ const applyCoupon = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to apply coupon',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -381,7 +381,7 @@ const removeCoupon = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to remove coupon',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -395,3 +395,5 @@ module.exports = {
   applyCoupon,
   removeCoupon
 };
+
+

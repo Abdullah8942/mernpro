@@ -43,7 +43,7 @@ const registerUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Registration failed',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -99,7 +99,7 @@ const loginUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -119,7 +119,7 @@ const getMe = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch profile',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -164,7 +164,7 @@ const updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update profile',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -198,7 +198,7 @@ const updatePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update password',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -232,7 +232,7 @@ const addAddress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to add address',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -269,7 +269,7 @@ const updateAddress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update address',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -296,7 +296,7 @@ const deleteAddress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete address',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -350,6 +350,8 @@ const addToWishlist = async (req, res) => {
     user.wishlist.push(productId);
     await user.save();
 
+    console.log('Wishlist updated successfully:', user.wishlist.length, 'items');
+
     res.json({
       success: true,
       message: 'Product added to wishlist',
@@ -360,7 +362,7 @@ const addToWishlist = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to add to wishlist',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -387,7 +389,7 @@ const removeFromWishlist = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to remove from wishlist',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -410,7 +412,7 @@ const getWishlist = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch wishlist',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -428,3 +430,5 @@ module.exports = {
   removeFromWishlist,
   getWishlist
 };
+
+

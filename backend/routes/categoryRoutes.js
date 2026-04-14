@@ -17,12 +17,14 @@ const { categoryValidation } = require('../middleware/validationMiddleware');
 router.get('/', getCategories);
 router.get('/with-counts', getCategoriesWithCounts);
 router.get('/id/:id', getCategoryById);
-router.get('/:slug', getCategoryBySlug);
 
 // Admin routes
 router.get('/admin/all', protect, admin, getAllCategoriesAdmin);
 router.post('/', protect, admin, categoryValidation, createCategory);
 router.put('/:id', protect, admin, updateCategory);
 router.delete('/:id', protect, admin, deleteCategory);
+
+// Keep slug route last so it does not shadow admin/static routes.
+router.get('/:slug', getCategoryBySlug);
 
 module.exports = router;

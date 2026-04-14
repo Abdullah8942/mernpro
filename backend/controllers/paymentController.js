@@ -61,7 +61,7 @@ const createPaymentIntent = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create payment intent',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -83,8 +83,23 @@ const confirmPayment = async (req, res) => {
       });
     }
 
+    // Check if user owns this order
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     // Verify payment with Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.metadata?.orderId !== order._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment intent does not belong to this order'
+      });
+    }
 
     if (paymentIntent.status === 'succeeded') {
       order.isPaid = true;
@@ -114,7 +129,7 @@ const confirmPayment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to confirm payment',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -179,7 +194,7 @@ const stripeWebhook = async (req, res) => {
 const getStripeConfig = (req, res) => {
   res.json({
     success: true,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_your_publishable_key'
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
   });
 };
 
@@ -213,7 +228,7 @@ const createStandalonePaymentIntent = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create payment intent',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -225,3 +240,5 @@ module.exports = {
   stripeWebhook,
   getStripeConfig
 };
+
+

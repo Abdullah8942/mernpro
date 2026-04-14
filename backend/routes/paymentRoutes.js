@@ -11,7 +11,7 @@ const { protect } = require('../middleware/authMiddleware');
 
 // Public routes
 router.get('/config', getStripeConfig);
-router.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+router.post('/webhook', stripeWebhook);
 router.post('/create-payment-intent', createStandalonePaymentIntent);
 
 // Protected routes

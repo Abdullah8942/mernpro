@@ -70,7 +70,7 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -118,7 +118,7 @@ const getUserById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -158,7 +158,7 @@ const updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update user',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -197,7 +197,7 @@ const deleteUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete user',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -251,7 +251,7 @@ const getUserStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user statistics',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -295,7 +295,7 @@ const createAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create admin user',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -308,3 +308,5 @@ module.exports = {
   getUserStats,
   createAdmin
 };
+
+

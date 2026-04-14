@@ -19,15 +19,15 @@ const { orderValidation, guestOrderValidation } = require('../middleware/validat
 router.get('/track/:orderNumber', trackOrder);
 router.post('/guest', guestOrderValidation, createGuestOrder);
 
+// Admin routes
+router.get('/admin/all', protect, admin, getAllOrders);
+router.get('/admin/stats', protect, admin, getOrderStats);
+
 // Protected routes
 router.post('/', protect, orderValidation, createOrder);
 router.get('/', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
 router.put('/:id/cancel', protect, cancelOrder);
-
-// Admin routes
-router.get('/admin/all', protect, admin, getAllOrders);
-router.get('/admin/stats', protect, admin, getOrderStats);
 router.put('/:id/status', protect, admin, updateOrderStatus);
 router.put('/:id/pay', protect, admin, markAsPaid);
 

@@ -99,4 +99,9 @@ reviewSchema.post('remove', function() {
   this.constructor.calculateAverageRating(this.product);
 });
 
+// Update rating after deleteOne (used by current controller code).
+reviewSchema.post('deleteOne', { document: true, query: false }, function() {
+  this.constructor.calculateAverageRating(this.product);
+});
+
 module.exports = mongoose.model('Review', reviewSchema);

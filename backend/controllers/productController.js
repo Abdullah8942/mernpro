@@ -106,7 +106,7 @@ const getProducts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch products',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -136,7 +136,7 @@ const getProductBySlug = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch product',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -165,7 +165,7 @@ const getProductById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch product',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -300,7 +300,7 @@ const createProduct = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `A product with this ${field} already exists`,
-        error: error.message
+        error: process.env.NODE_ENV === 'production' ? undefined : error.message
       });
     }
     
@@ -310,14 +310,14 @@ const createProduct = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: messages.join(', '),
-        error: error.message
+        error: process.env.NODE_ENV === 'production' ? undefined : error.message
       });
     }
     
     res.status(500).json({
       success: false,
       message: 'Failed to create product',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -432,7 +432,7 @@ const updateProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update product',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -463,7 +463,7 @@ const deleteProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete product',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -490,7 +490,7 @@ const getFeaturedProducts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch featured products',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -518,7 +518,7 @@ const getNewArrivals = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch new arrivals',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -546,7 +546,7 @@ const getBestSellers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch best sellers',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -583,7 +583,7 @@ const getRelatedProducts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch related products',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -640,7 +640,7 @@ const getAllProductsAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch products',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -658,3 +658,5 @@ module.exports = {
   getRelatedProducts,
   getAllProductsAdmin
 };
+
+

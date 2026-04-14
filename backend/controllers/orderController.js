@@ -2,14 +2,47 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
+const Stripe = require('stripe');
 const { sendOrderNotification, sendOrderConfirmation, sendOrderStatusUpdate } = require('../utils/emailService');
+
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('Stripe secret key is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
+
+const verifyStripePayment = async (paymentResult, expectedAmount) => {
+  if (!paymentResult?.id) {
+    throw new Error('Missing Stripe payment intent id');
+  }
+
+  const stripe = getStripe();
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentResult.id);
+
+  if (paymentIntent.status !== 'succeeded') {
+    throw new Error('Stripe payment is not completed');
+  }
+
+  const expectedAmountInSmallestUnit = Math.round(expectedAmount * 100);
+  if (paymentIntent.amount !== expectedAmountInSmallestUnit) {
+    throw new Error('Stripe payment amount mismatch');
+  }
+
+  return {
+    id: paymentIntent.id,
+    status: paymentIntent.status,
+    updateTime: new Date().toISOString(),
+    email: paymentIntent.receipt_email || null
+  };
+};
 
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
 const createOrder = async (req, res) => {
   try {
-    const { shippingAddress, billingAddress, paymentMethod, notes, isGift, giftMessage } = req.body;
+    const { shippingAddress, billingAddress, paymentMethod, notes, isGift, giftMessage, paymentResult } = req.body;
 
     // Get user's cart
     const cart = await Cart.findOne({ user: req.user._id })
@@ -70,6 +103,18 @@ const createOrder = async (req, res) => {
 
     const totalAmount = subtotal + shippingCost + taxAmount - discount;
 
+    let verifiedPaymentResult = null;
+    if (paymentMethod === 'stripe') {
+      try {
+        verifiedPaymentResult = await verifyStripePayment(paymentResult, totalAmount);
+      } catch (verificationError) {
+        return res.status(400).json({
+          success: false,
+          message: verificationError.message
+        });
+      }
+    }
+
     // Create order
     const order = await Order.create({
       user: req.user._id,
@@ -87,7 +132,9 @@ const createOrder = async (req, res) => {
       isGift,
       giftMessage,
       orderStatus: 'pending',
-      isPaid: paymentMethod === 'cod' ? false : false
+      isPaid: !!verifiedPaymentResult,
+      paidAt: verifiedPaymentResult ? new Date() : null,
+      paymentResult: verifiedPaymentResult
     });
 
     // Update product stock
@@ -134,7 +181,7 @@ const createOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create order',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -175,7 +222,7 @@ const getMyOrders = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch orders',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -212,7 +259,7 @@ const getOrderById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch order',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -240,7 +287,7 @@ const trackOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to track order',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -299,7 +346,7 @@ const cancelOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -378,7 +425,7 @@ const getAllOrders = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch orders',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -436,7 +483,7 @@ const updateOrderStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update order status',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -473,7 +520,7 @@ const markAsPaid = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to mark order as paid',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -533,7 +580,7 @@ const getOrderStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch order statistics',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -597,6 +644,18 @@ const createGuestOrder = async (req, res) => {
 
     const totalAmount = subtotal + shippingCost + taxAmount;
 
+    let verifiedPaymentResult = null;
+    if (paymentMethod === 'stripe') {
+      try {
+        verifiedPaymentResult = await verifyStripePayment(paymentResult, totalAmount);
+      } catch (verificationError) {
+        return res.status(400).json({
+          success: false,
+          message: verificationError.message
+        });
+      }
+    }
+
     // Create order
     const order = await Order.create({
       user: null,
@@ -606,7 +665,7 @@ const createGuestOrder = async (req, res) => {
       shippingAddress,
       billingAddress: billingAddress || shippingAddress,
       paymentMethod,
-      paymentResult: paymentResult || null,
+      paymentResult: verifiedPaymentResult,
       subtotal,
       shippingCost,
       taxAmount,
@@ -616,7 +675,8 @@ const createGuestOrder = async (req, res) => {
       isGift,
       giftMessage,
       orderStatus: 'pending',
-      isPaid: paymentMethod === 'stripe' && paymentResult?.status === 'succeeded'
+      isPaid: !!verifiedPaymentResult,
+      paidAt: verifiedPaymentResult ? new Date() : null
     });
 
     // Update product stock
@@ -643,7 +703,7 @@ const createGuestOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create order',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -660,3 +720,5 @@ module.exports = {
   markAsPaid,
   getOrderStats
 };
+
+

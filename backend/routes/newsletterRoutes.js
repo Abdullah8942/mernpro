@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { sendNewsletterSubscription } = require('../utils/emailService');
-
-// Newsletter subscribers storage (in production, use database)
-const subscribers = new Set();
+const NewsletterSubscriber = require('../models/NewsletterSubscriber');
 
 // @desc    Subscribe to newsletter
 // @route   POST /api/newsletter/subscribe
@@ -28,19 +26,22 @@ router.post('/subscribe', async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if already subscribed
-    if (subscribers.has(email.toLowerCase())) {
+    const existingSubscriber = await NewsletterSubscriber.findOne({ email: normalizedEmail });
+    if (existingSubscriber) {
       return res.status(400).json({
         success: false,
         message: 'This email is already subscribed'
       });
     }
 
-    // Add to subscribers
-    subscribers.add(email.toLowerCase());
+    // Persist subscriber
+    await NewsletterSubscriber.create({ email: normalizedEmail });
 
     // Send notification emails
-    await sendNewsletterSubscription(email);
+    await sendNewsletterSubscription(normalizedEmail);
 
     res.status(201).json({
       success: true,

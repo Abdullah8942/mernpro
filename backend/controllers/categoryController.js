@@ -18,7 +18,7 @@ const getCategories = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -57,7 +57,7 @@ const getCategoryBySlug = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch category',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -84,7 +84,7 @@ const getCategoryById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch category',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -122,7 +122,7 @@ const createCategory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create category',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -167,7 +167,7 @@ const updateCategory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update category',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -216,7 +216,7 @@ const deleteCategory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete category',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -264,7 +264,7 @@ const getCategoriesWithCounts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -297,7 +297,7 @@ const getAllCategoriesAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message
     });
   }
 };
@@ -312,3 +312,5 @@ module.exports = {
   getCategoriesWithCounts,
   getAllCategoriesAdmin
 };
+
+

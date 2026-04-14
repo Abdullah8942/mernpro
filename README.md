@@ -1,71 +1,64 @@
-<<<<<<< HEAD
-# Meraab & Emaan - E-Commerce Web Application
+# Meraab & Emaan E-Commerce
 
-A complete MERN stack e-commerce web application for "Meraab & Emaan" - an elegant Pakistani clothing brand specializing in Shalwar Kameez, Bridal, Formal, Casual, Party Wear, and Seasonal Collections.
+MERN-stack e-commerce application with admin dashboard, product management, checkout, and order tracking.
 
-## 🌟 Features
+## Tech Stack
 
-### Customer Features
-- Browse products by category with advanced filtering
-- Product search and sorting
-- Detailed product pages with size/color selection
-- Shopping cart with quantity management
-- Secure checkout with Stripe integration
-- Cash on Delivery (COD) option
-- User registration and authentication
-- Order tracking and history
-- Wishlist functionality
-- User profile management
-- Custom measurements for tailored orders
+- Frontend: React (CRA), React Router, Tailwind CSS, Axios
+- Backend: Node.js, Express, MongoDB (Mongoose), JWT
+- Payments: Stripe
 
-### Admin Features
-- Dashboard with sales analytics
-- Product management (CRUD)
-- Category management
-- Order management with status updates
-- User management
-- Inventory tracking
+## Local Development
 
-## 🛠️ Tech Stack
+1. Install dependencies:
 
-### Frontend
-- React 19.2
-- React Router DOM
-- Tailwind CSS
-- Axios
-- React Icons
-- React Hot Toast
-- Stripe.js
+    npm run install:all
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB with Mongoose
-- JWT Authentication
-- Bcrypt.js
-- Multer (file uploads)
-- Stripe API
-- Express Validator
+2. Configure environment files:
 
-## 📁 Project Structure
+- Copy backend variables from backend/.env.example into backend/.env
+- Copy frontend variables from frontend/.env.example into frontend/.env
 
-```
-meraab-emaan/
-├── backend/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── uploads/
-│   ├── server.js
-│   └── package.json
-│
-└── frontend/
-    ├── public/
-    ├── src/
-    │   ├── components/
-    │   │   ├── common/
-    │   │   ├── layout/
+3. Run backend:
 
-    │   │   └── products/
+    npm run dev:backend
+
+4. Run frontend:
+
+    npm run dev:frontend
+
+## Production Build
+
+Build frontend bundle:
+
+npm run build
+
+Run backend server:
+
+npm start
+
+## Railway Deployment Notes
+
+- Build Command: npm run build
+- Start Command: npm start
+- Required environment variables:
+  - MONGO_URI
+  - JWT_SECRET
+  - JWT_EXPIRE
+  - FRONTEND_URL
+  - STRIPE_SECRET_KEY
+  - STRIPE_PUBLISHABLE_KEY
+  - STRIPE_WEBHOOK_SECRET
+  - EMAIL_USER
+  - EMAIL_PASS
+  - STORE_OWNER_EMAIL
+
+Detailed deploy runbook: see RAILWAY_DEPLOYMENT.md
+Railway variable template: see RAILWAY_ENV_TEMPLATE.md
+Post-deploy smoke script: scripts/railway-smoke-test.ps1
+
+## Security Notes
+
+- Never commit real secrets to git.
+- Use .env.example files as templates.
+- Rotate credentials immediately if they were previously exposed.

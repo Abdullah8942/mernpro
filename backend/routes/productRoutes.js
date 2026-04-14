@@ -33,9 +33,6 @@ router.put('/:id', protect, admin, upload.array('images', 10), updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
 router.get('/:id/related', getRelatedProducts);
 
-// Slug route - MUST be last (catches everything else)
-router.get('/:slug', getProductBySlug);
-
 // Image upload route
 router.post('/upload', protect, admin, upload.array('images', 10), (req, res) => {
   try {
@@ -53,5 +50,8 @@ router.post('/upload', protect, admin, upload.array('images', 10), (req, res) =>
     });
   }
 });
+
+// Slug route - MUST be last (catches everything else)
+router.get('/:slug', getProductBySlug);
 
 module.exports = router;
